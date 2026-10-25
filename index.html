@@ -392,6 +392,20 @@ const QUIZ = [
   {q:'Which everyday item uses a sensor invented at NASA\'s JPL?',a:'Smartphone camera',w:['Microwave oven','Bicycle','Wristwatch'],why:'The CMOS active-pixel sensor was developed to make spacecraft cameras smaller.'},
   {q:'How long is one lunar day-night cycle?',a:'About 29.5 Earth days',w:['24 hours','About 3 days','About 1 year'],why:'The Moon rotates once per orbit, so one side faces the Sun for ~two weeks.'},
   {q:'Why is water a good radiation shield?',a:'Hydrogen atoms block particles well',w:['It is cold','It is transparent','It is heavy'],why:'Hydrogen-rich materials are among the best at stopping charged particles.'},
+  {q:'Why do rockets use stages?',a:'To drop empty tanks and become lighter',w:['To look cool','To cool the engines','To carry more passengers'],why:'Shedding dead weight means the remaining fuel accelerates a much lighter rocket (the rocket equation).'},
+  {q:'What keeps the ISS in orbit without falling to Earth?',a:'It falls around Earth as fast as it moves sideways',w:['There is no gravity there','A giant magnet','Constant engine firing'],why:'Gravity at ISS altitude is still ~90% of surface gravity. Astronauts float because they are in continuous free-fall.'},
+  {q:'How much sunlight does Mars get compared with Earth?',a:'About 43%',w:['About 100%','About 5%','About 200%'],why:'Mars is 1.5× farther from the Sun, and sunlight weakens with the square of distance.'},
+  {q:'What made the Apollo 13 crew survive after an explosion?',a:'Improvised fixes and teamwork with Mission Control',w:['A backup rocket','Luck alone','A rescue ship'],why:'Engineers on Earth and the crew invented a CO₂ filter adapter from spare parts.'},
+  {q:'Which planet\'s moon Europa orbits?',a:'Jupiter',w:['Saturn','Mars','Neptune'],why:'Europa is one of Jupiter\'s four large Galilean moons, discovered by Galileo in 1610.'},
+  {q:'What is regolith?',a:'Loose dust and rock covering a planet or moon',w:['A type of ice','A rocket fuel','A space suit fabric'],why:'Regolith can be used for construction, radiation shielding and extracting oxygen.'},
+  {q:'Why do astronauts get taller in space?',a:'Their spines stretch without gravity compressing them',w:['They grow new bones','The suits stretch','It is an illusion of cameras'],why:'Astronauts can gain up to ~3% in height, then shrink back after returning to Earth.'},
+  {q:'Which gas do plants take in and turn into oxygen?',a:'Carbon dioxide',w:['Helium','Argon','Methane'],why:'Photosynthesis: CO₂ + water + light → sugar + oxygen. Greenhouses help close the loop.'},
+  {q:'Why are Moon-base sites near the poles attractive?',a:'Near-constant sunlight on peaks and ice in craters',w:['Warm beaches','Thick atmosphere','Closer to Mars'],why:'Power from sunlight plus nearby water ice makes polar sites ideal.'},
+  {q:'What is a day on Mars called?',a:'A sol',w:['A lune','A jovian','A cycle'],why:'A sol is about 24 hours 40 minutes, so mission clocks drift from Earth time.'},
+  {q:'Which mission nudged an asteroid\'s orbit in 2022?',a:'DART',w:['Juno','Cassini','Hubble'],why:'DART proved that a spacecraft can change an asteroid\'s path, a test for planetary defense.'},
+  {q:'What does a spacesuit NOT need to provide?',a:'Rain protection',w:['Oxygen','Pressure','Temperature control'],why:'Suits are mini-spacecraft: pressure, oxygen, cooling, and micrometeoroid protection.'},
+  {q:'Why does Europa\'s ocean stay liquid under ice?',a:'Jupiter\'s tides flex and heat the moon',w:['Volcanoes on the surface','Sunlight','Heat from Earth'],why:'Tidal heating squeezes the interior like a stress ball, warming it.'},
+  {q:'Which is the hardest part of a Mars mission?',a:'Landing a heavy spacecraft in thin air',w:['Finding the planet','Getting dust-free','Losing gravity'],why:'Mars air is too thin for parachutes alone yet thick enough to burn up heat shields.'},
   {q:'What is the "Overview Effect"?',a:'Astronauts\' awe seeing Earth as a fragile whole',w:['A telescope trick','A rocket engine','A space illness'],why:'Many astronauts report a lasting shift in perspective about our planet.'}
 ];
 
@@ -413,8 +427,58 @@ const ACHIEVEMENTS = {
   scholar:{icon:'🎓',name:'Mission Scholar',txt:'Answer 4 quiz questions correctly.'},
   tech:{icon:'🧪',name:'Innovator',txt:'Research 3 technologies.'},
   survivor:{icon:'🏅',name:'Survivor',txt:'Complete the mission.'},
-  greens:{icon:'🌱',name:'Green Thumb',txt:'Harvest 5 times.'}
+  greens:{icon:'🌱',name:'Green Thumb',txt:'Harvest 5 times.'},
+  student:{icon:'📚',name:'Quick Study',txt:'Finish 3 Academy lessons.'},
+  graduate:{icon:'🎖️',name:'Mission Graduate',txt:'Finish every Academy lesson.'}
 };
+
+
+const LESSONS = [
+  {id:'radiation',icon:'☢️',title:'Radiation: the invisible hazard',
+   body:['On Earth, our magnetic field and thick atmosphere block most solar and cosmic radiation. In deep space, nothing does.','Two main sources: <b>solar particle events</b> (flares that last hours) and <b>galactic cosmic rays</b> (a constant trickle of very fast particles). The first can be sheltered from; the second can only be reduced.','Good shielding uses hydrogen-rich materials: <b>water, plastics and ice</b>. Burying a habitat under regolith adds a free shield.'],
+   q:[{q:'Which material is great for radiation shielding?',a:'Water',w:['Aluminium foil','Glass','Air']},
+      {q:'Which radiation source can astronauts shelter from within hours?',a:'Solar flares',w:['Cosmic rays','Moonlight','Radio waves']}],
+   sum:'Radiation is shielded best by hydrogen-rich materials such as water and plastic; solar flares can be sheltered from, cosmic rays only reduced.'},
+  {id:'isru',icon:'⛏️',title:'Living off the land (ISRU)',
+   body:['Launching 1 kg to the Moon costs on the order of hundreds of thousands of dollars. So missions try to <b>use what is already there</b>.','Examples: melt ice for water, split water into oxygen and hydrogen fuel, extract oxygen from rock, make oxygen from Mars\' CO₂ air (MOXIE), 3D-print bricks from regolith.','Every step you do locally means a smaller, cheaper, safer rocket.'],
+   q:[{q:'What does ISRU let missions avoid?',a:'Launching everything from Earth',w:['Using electricity','Landing safely','Talking to Earth']},
+      {q:'What did MOXIE make on Mars?',a:'Oxygen from CO₂',w:['Water from rocks','Rocket wings','Food']}],
+   sum:'ISRU means using local resources, like ice, regolith and CO₂, to cut the mass launched from Earth.'},
+  {id:'body',icon:'🦴',title:'Your body in low gravity',
+   body:['Without Earth\'s full gravity, your body stops working hard: <b>bones lose density</b>, <b>muscles shrink</b>, fluids shift toward the head and the heart weakens a little.','On the ISS astronauts exercise ~2 hours a day with treadmills and resistance machines, and eat calcium- and vitamin D-rich food.','Mars gravity is 38% of Earth\'s: nobody knows yet if that is enough to keep us healthy long term. That is a real research question.'],
+   q:[{q:'What happens to bones in low gravity?',a:'They lose density',w:['They grow stronger','They turn to rubber','Nothing']},
+      {q:'How do astronauts fight this?',a:'Daily exercise',w:['Sleeping more','Wearing heavy boots only','Cold showers']}],
+   sum:'Low gravity weakens bones and muscles; astronauts counter it with ~2 hours of daily exercise and good nutrition.'},
+  {id:'mind',icon:'🧠',title:'Mind, morale & teamwork',
+   body:['Crews face <b>isolation, confinement and monotony</b>. Studies in Antarctica, undersea habitats and sealed domes (HI-SEAS, SIRIUS, Mars-500) show how moods, sleep and conflict change over months.','What helps: regular schedules, hobbies, private space, gardening, calls with family, and feeling that your work matters.','A good crew shares tasks, speaks openly about stress and looks after each other.'],
+   q:[{q:'Which helps crew morale on long missions?',a:'Routines, hobbies and contact with home',w:['Working non-stop','Total silence','Skipping sleep']},
+      {q:'Why do scientists study crews in Antarctica?',a:'It is isolated like a space mission',w:['It is warm','It has aliens','It is near the Moon']}],
+   sum:'Isolation and confinement affect mood; routines, privacy, hobbies and contact with home keep crews healthy.'},
+  {id:'life',icon:'♻️',title:'Closed-loop life support',
+   body:['Every astronaut needs about <b>0.8 kg of oxygen, 3 kg of water and 0.6 kg of food</b> per day. For a long mission that is tonnes of supplies.','Life-support systems clean and reuse: <b>urine and sweat are turned back into drinking water</b> (about 90% recovered on the ISS), CO₂ is scrubbed from the air, and oxygen comes from electrolysis.','The dream is a <b>closed loop</b> where plants, people and machines recycle everything, like a tiny Earth.'],
+   q:[{q:'What fraction of water does the ISS recycle?',a:'About 90%',w:['About 10%','About 40%','None']},
+      {q:'How does the ISS make most of its oxygen?',a:'Splitting water',w:['Mining it','Burning rocket fuel','Trees']}],
+   sum:'The ISS recycles roughly 90% of its water and makes oxygen by electrolysis, a step towards fully closed-loop life support.'},
+  {id:'orbit',icon:'🛰️',title:'Orbits, rockets & delta-v',
+   body:['An orbit is falling around a planet: you move sideways so fast that the ground curves away beneath you. Low Earth orbit needs about <b>28,000 km/h</b>.','Rockets are mostly fuel. Because you must lift the fuel itself, adding a little cargo needs a lot more fuel: the <b>rocket equation</b>.','Missions are planned using <b>delta-v</b>, the total speed change needed. Mars is cheapest to reach about every 26 months, when Earth and Mars line up.'],
+   q:[{q:'What is an orbit?',a:'Falling around a planet while moving sideways',w:['Floating with no gravity','Being pulled by magnets','Flying with wings']},
+      {q:'How often is the best Mars launch window?',a:'About every 26 months',w:['Every week','Every 10 years','Only once ever']}],
+   sum:'Orbits are continuous free-fall; launch windows to Mars open about every 26 months.'},
+  {id:'why',icon:'🌍',title:'Why do we explore?',
+   body:['Space exploration pays back on Earth: <b>satellites</b> provide weather forecasts, GPS and communications; <b>spin-offs</b> include camera sensors, water filters, medical imaging and lightweight materials.','It drives <b>science</b>: studying Venus\' runaway greenhouse effect taught us about climate; asteroids teach us about the origin of life\'s ingredients and how to defend Earth.','And it inspires: the Apollo generation became engineers, doctors and teachers. Seeing Earth from space reminds us how rare and precious it is.'],
+   q:[{q:'Which technology depends on satellites?',a:'GPS navigation',w:['Candles','Bicycles','Paper maps only']},
+      {q:'What did Venus teach us about Earth?',a:'How a greenhouse effect can run away',w:['How to fly','How to farm','How to swim']}],
+   sum:'Space exploration gives us satellites, spin-off technology, climate insight, planetary defense and inspiration.'}
+];
+
+
+const MISSIONS = [
+  {icon:'🌕',name:'Artemis (NASA)',txt:'Returning humans to the Moon and building a sustained presence at the south pole.'},
+  {icon:'🔴',name:'Perseverance & MOXIE',txt:'A Mars rover collecting samples and proving oxygen can be made from the Martian atmosphere.'},
+  {icon:'🧊',name:'Europa Clipper',txt:'A probe flying past Europa dozens of times to study its ice shell, ocean and habitability.'},
+  {icon:'🛰️',name:'International Space Station',txt:'Over 20 years of continuous human presence, testing life support, medicine and teamwork.'},
+  {icon:'🔭',name:'James Webb Space Telescope',txt:'Looking back to the early universe and studying atmospheres of distant worlds.'}
+];
 
 const GENERAL_FACTS = [
   'Space exploration has produced thousands of spin-off technologies, from memory foam to scratch-resistant lenses.',
@@ -449,7 +513,7 @@ function newGame(key){
     s:{oxygen:70+(l.has('o2')?15:0), water:65+(l.has('h2o')?15:0), food:65+(l.has('food')?15:0),
        power:70+(l.has('solar')?15:0), health:100, morale:80},
     tech:new Set(), build:new Set(), visited:new Set(), codex:new Map(), ach:new Set(),
-    unlocked:new Set(), quizRight:0, quizTotal:0, harvests:0, storm:0, landing:null,
+    unlocked:new Set(), quizRight:0, quizTotal:0, lessons:new Set(), lesson:null, lStep:0, lRight:0, harvests:0, storm:0, landing:null,
     log:[], lastFact:null, rover:{x:0.62,target:0.62,t:0}};
   G.ap = mods().ap;
   scr='land'; render();
@@ -539,13 +603,13 @@ function renderBrief(){
         <b>${c.icon} ${c.name}</b><br><small style="color:var(--muted)">${c.desc}</small></button>`).join('')}</div>
   </div>
   <div class="card">
-    <h2>Cargo loadout <span class="tag">${LOAD_BUDGET-loadSpent()} / ${LOAD_BUDGET} mass points left</span></h2>
-    <p class="sub">Every kilogram launched costs a fortune, so you can't take everything. Choose wisely!</p>
+    <h2>Cargo loadout <span class="tag">📦 Cargo space left: ${LOAD_BUDGET-loadSpent()} of ${LOAD_BUDGET}</span></h2>
+    <p class="sub">Rockets can only carry so much, so you can't take everything. Choose wisely!</p>
     ${LOADOUT.map(l=>{
       const on=setup.load.has(l.id), can=on||loadSpent()+l.cost<=LOAD_BUDGET;
       return `<label class="opt ${on?'on':''}" style="${can?'':'opacity:.4'}">
         <input type="checkbox" ${on?'checked':''} ${can?'':'disabled'} onchange="toggleLoad('${l.id}')">
-        <span><b>${l.icon} ${l.name}</b> <span class="tag">${l.cost} pts</span><br><small style="color:var(--muted)">${l.desc}</small></span></label>`;
+        <span><b>${l.icon} ${l.name}</b> <span class="tag">${"📦".repeat(l.cost)}</span><br><small style="color:var(--muted)">${l.desc}</small></span></label>`;
     }).join('')}
   </div>
   <div class="card">
@@ -686,7 +750,7 @@ function bar(k){
 function renderSurface(){
   const d=G.d, m=mods();
   const crit=['oxygen','water','food','health','power'].filter(k=>G.s[k]<25);
-  const tabs=[['actions','🛠️ Actions'],['map','🗺️ Expeditions'],['base','🏗️ Base'],['research','🧪 Research'],['codex','📖 Codex']];
+  const tabs=[['actions','🛠️ Actions'],['map','🗺️ Expeditions'],['base','🏗️ Base'],['learn','🎓 Academy'],['research','🧪 Research'],['codex','📖 Codex']];
   app.innerHTML = `
   <div class="card">
     <div class="hud">
@@ -701,10 +765,49 @@ function renderSurface(){
   </div>
   ${G.event?renderEvent():`
   <div class="tabs">${tabs.map(([k,l])=>`<button class="${G.tab===k?'sel':''}" onclick="G.tab='${k}';render()">${l}</button>`).join('')}</div>
-  ${G.tab==='actions'?tabActions():G.tab==='map'?tabMap():G.tab==='base'?tabBase():G.tab==='research'?tabResearch():tabCodex()}
+  ${G.tab==='actions'?tabActions():G.tab==='map'?tabMap():G.tab==='base'?tabBase():G.tab==='research'?tabResearch():G.tab==='learn'?tabLearn():tabCodex()}
   `}
   ${G.lastFact?`<div class="fact"><b>💡 Did you know?</b> ${G.lastFact}</div>`:''}
   <div class="card"><b>📓 Mission log</b><div class="log">${G.log.slice(0,25).map(l=>`<p>${l}</p>`).join('')}</div></div>`;
+}
+
+
+function tabLearn(){
+  if(G.lesson){
+    const L=LESSONS.find(x=>x.id===G.lesson);
+    if(G.lStep===0) return `<div class="card"><h2>${L.icon} ${L.title}</h2>
+      ${L.body.map(p=>`<p>${p}</p>`).join('')}
+      <button class="primary" onclick="G.lStep=1;render()">I'm ready for the quiz ▶</button></div>`;
+    const q=G.lq[G.lStep-1];
+    return `<div class="card" style="border-color:var(--accent)"><h2>${L.icon} Quiz ${G.lStep}/${L.q.length}</h2><p>${q.q}</p>
+      <div class="choices">${q.opts.map((o,i)=>`<button onclick="answerLesson(${i})">${o.t}</button>`).join('')}</div></div>`;
+  }
+  return `<div class="card"><h2>🎓 Mission Academy</h2>
+  <p class="sub">Study real space science between tasks. Each lesson takes up one action of your day and rewards science and morale. ${G.lessons.size}/${LESSONS.length} complete.</p>
+  <div class="actions">${LESSONS.map(l=>{ const done=G.lessons.has(l.id);
+    return `<button onclick="startLesson('${l.id}')" ${(done&&false)||(!done&&G.ap<1)?'disabled':''}><b>${l.icon} ${l.title} ${done?'✅':''}</b>
+    <small>${done?'Completed — tap to review':'2 quick questions'}</small></button>`; }).join('')}</div></div>`;
+}
+function startLesson(id){
+  const L=LESSONS.find(x=>x.id===id), done=G.lessons.has(id);
+  if(!done){ if(G.ap<1) return; G.ap--; }
+  G.lesson=id; G.lStep=0; G.lRight=0; G.lReview=done;
+  G.lq=L.q.map(q=>({q:q.q,opts:shuffle([{t:q.a,correct:true},...q.w.map(t=>({t,correct:false}))])}));
+  render();
+}
+function answerLesson(i){
+  const L=LESSONS.find(x=>x.id===G.lesson), c=G.lq[G.lStep-1].opts[i];
+  if(c.correct){ G.lRight++; toast('✅ Correct!'); beep(900,.15,'triangle'); } else { toast('❌ Not quite: review the lesson text.'); beep(200,.2,'sawtooth'); }
+  if(G.lStep<L.q.length){ G.lStep++; return render(); }
+  // finished
+  if(!G.lReview){
+    G.lessons.add(L.id);
+    const sc=6+G.lRight*4; addSci(Math.round(sc*mods().sci)); applyDelta({morale:6});
+    log(`🎓 Academy: ${L.title} (${G.lRight}/${L.q.length} correct). +${Math.round(sc*mods().sci)} science.`);
+    learn(L.sum);
+    if(G.lessons.size>=3) ach('student'); if(G.lessons.size>=LESSONS.length) ach('graduate');
+  } else toast('Review complete.');
+  G.lesson=null; if(checkFail()) return render(); render();
 }
 
 function can(cost){ return Object.entries(cost).every(([k,v])=>G.s[k]>=v); }
@@ -719,7 +822,7 @@ function tabActions(){
     if(a.sci>=5) gain+=` +${Math.round(a.sci*mods().sci)}🔬`;
     if(a.mat) gain+=` +${a.mat}🧱`;
     return `<button onclick="doAction('${a.id}')" ${ok?'':'disabled'}><b>${a.icon} ${a.name}</b>
-      <small>${a.desc}</small><br><small>${costStr(a.cost)} ${costStr(a.cost)&&gain?'→':''} ${gain}</small></button>`;
+      <small>${a.desc}</small>${gain?`<br><small>Yields ${gain}</small>`:''}</button>`;
   }).join('')}</div>
   <div class="row" style="margin-top:12px"><button class="primary" style="flex:1" onclick="endDay()">🌙 END DAY ${G.ap>0?`(${G.ap} AP unused)`:''}</button></div></div>`;
 }
@@ -727,18 +830,18 @@ function tabActions(){
 function tabMap(){
   const d=G.d, s=d.sites.find(x=>x.id===G.selSite);
   return `<div class="card"><h2>🗺️ Expedition map</h2>
-  <p class="sub">Each trip costs <b>2 action points</b> plus power and oxygen. First visits pay full rewards; revisits pay half. ${d.sites.filter(x=>G.visited.has(x.id)).length}/${d.sites.length} explored.</p>
+  <p class="sub">Expeditions are long trips: make sure you have enough energy, air and time. First visits pay full rewards; revisits pay half. ${d.sites.filter(x=>G.visited.has(x.id)).length}/${d.sites.length} explored.</p>
   <div id="map"><span class="hab">🏠</span>
     ${d.sites.map(x=>`<button class="site ${G.visited.has(x.id)?'done':''} ${G.selSite===x.id?'sel':''}" style="left:${x.x}%;top:${x.y}%" title="${x.name}" onclick="G.selSite='${x.id}';render()">${x.icon}</button>`).join('')}
   </div>
   <div class="mapinfo">${s?siteInfo(s):'<span class="sub">Tap a site to see details.</span>'}</div></div>`;
 }
 function siteInfo(s){
-  const ok=can(s.cost)&&G.ap>=2, m=mods(), rk=Math.round(Math.min(.95,s.risk*m.risk*(1))*100);
+  const ok=can(s.cost)&&G.ap>=2, m=mods(), rk=Math.min(.95,s.risk*m.risk), rl=rk<.15?'Low':rk<.27?'Medium':'High';
   const rew=[s.sci?`+${Math.round(s.sci*m.sci)}🔬`:'',s.water?`+${s.water}💧`:'',s.mat?`+${s.mat}🧱`:'',s.morale?`+${s.morale}🙂`:''].filter(Boolean).join(' ');
   return `<h3>${s.icon} ${s.name} ${G.visited.has(s.id)?'<span class="tag">visited</span>':'<span class="tag">new</span>'}</h3>
   <p style="margin:4px 0">${s.desc}</p>
-  <p class="sub" style="margin:4px 0">Cost: ${costStr(s.cost)} · 2 AP · Rewards: ${rew} · Accident risk: <b>${rk}%</b>${s.rad?' (radiation)':''}</p>
+  <p class="sub" style="margin:4px 0">Rewards: ${rew} · Risk: <b>${rl}</b>${s.rad?' (radiation)':''}${ok?'':' · <i>Not ready: you need more energy, air or time today.</i>'}</p>
   <button class="primary" ${ok?'':'disabled'} onclick="doExpedition('${s.id}')">🚙 Go on expedition</button>`;
 }
 function tabBase(){
@@ -748,16 +851,16 @@ function tabBase(){
   <div class="actions">${BUILDINGS.map(b=>{
     const cost=Math.round(b.cost*m.cost), has=G.build.has(b.id);
     return `<button onclick="build('${b.id}')" ${has||G.mat<cost?'disabled':''}>
-      <b>${b.icon} ${b.name} ${has?'✅':''}</b><small>${b.desc}</small><br><small>${has?'Built':'Cost: '+cost+'🧱'}</small></button>`;
+      <b>${b.icon} ${b.name} ${has?'✅':''}</b><small>${b.desc}</small><br><small>${has?'Built':G.mat<cost?'Not enough materials yet':'Ready to build'}</small></button>`;
   }).join('')}</div></div>`;
 }
 function tabResearch(){
   return `<div class="card"><h2>🧪 Research</h2>
-  <p class="sub">Spend science points (🔬 ${sciSpendable()} available) to unlock permanent upgrades. Spending science does not lower your final discoveries.</p>
+  <p class="sub">Invest your science (🔬 ${sciSpendable()} available) in permanent upgrades. Spending it never lowers your final discoveries.</p>
   <div class="actions">${TECHS.map(t=>{
     const has=G.tech.has(t.id);
     return `<button onclick="research('${t.id}')" ${has||sciSpendable()<t.cost?'disabled':''}>
-      <b>${t.icon} ${t.name} ${has?'✅':''}</b><small>${t.desc}</small><br><small>${has?'Researched':'Cost: '+t.cost+'🔬'}</small></button>`;
+      <b>${t.icon} ${t.name} ${has?'✅':''}</b><small>${t.desc}</small><br><small>${has?'Researched':sciSpendable()<t.cost?'Needs more science':'Ready to research'}</small></button>`;
   }).join('')}</div></div>`;
 }
 function tabCodex(){
@@ -866,7 +969,7 @@ function endDay(){
     const fresh=pool.filter(e=>!G.seen.has(e.title));
     const e=pick(fresh.length?fresh:pool); G.seen.add(e.title);
     G.event={type:'event',...e}; beep(300,.2,'square');
-  } else if(roll<df.event+.22){
+  } else if(roll<df.event+.3){
     const q=pick(QUIZ), opts=shuffle([{t:q.a,correct:true},...q.w.map(t=>({t,correct:false}))]);
     G.event={type:'quiz',title:'📡 Mission Control Quiz',text:q.q,choices:opts,fact:q.why};
   } else if(Math.random()<.5) learn(pick(GENERAL_FACTS));
@@ -910,7 +1013,7 @@ function checkFail(){
 /* ---------- end screen ---------- */
 function renderEnd(){
   const d=G.d, stat=Object.values(G.s).reduce((a,b)=>a+b,0)/6;
-  const score=Math.round(G.sci*10+stat*5+G.visited.size*40+G.build.size*30+(G.win?500:G.day*20)+G.quizRight*25);
+  const score=Math.round(G.sci*10+stat*5+G.visited.size*40+G.build.size*30+(G.win?500:G.day*20)+G.quizRight*25+G.lessons.size*40);
   const rank=!G.win?'Lost in Space':G.sci>=140?'Mission Commander 🏆':G.sci>=90?'Senior Astronaut 🥇':G.sci>=45?'Astronaut 🥈':'Rookie 🥉';
   const hs=store.get('hs',{}); const best = G.win && score>(hs[G.key]||0); if(best){ hs[G.key]=score; store.set('hs',hs); }
   app.innerHTML = `
@@ -929,6 +1032,13 @@ function renderEnd(){
     <p class="sub">Your science unlocked these real-world benefits. Locked ones need more research.</p>
     ${SPINOFFS.map(s=>`<div class="tech ${G.unlocked.has(s.name)?'':'locked'}"><div class="e">${G.unlocked.has(s.name)?s.icon:'🔒'}</div>
       <div><b>${s.name}</b> <span class="tag">${s.at} 🔬</span><br><small style="color:var(--muted)">${s.txt}</small></div></div>`).join('')}
+  </div>
+  <div class="card"><h2>🚀 Real missions behind this game</h2>
+    ${MISSIONS.map(m=>`<div class="tech"><div class="e">${m.icon}</div><div><b>${m.name}</b><br><small style="color:var(--muted)">${m.txt}</small></div></div>`).join('')}
+  </div>
+  <div class="card"><h2>📊 Your learning</h2>
+    <p>Academy lessons: <b>${G.lessons.size}/${LESSONS.length}</b> · Quiz answers correct: <b>${G.quizRight}/${G.quizTotal}</b> · Facts in Codex: <b>${G.codex.size}</b></p>
+    <p class="sub">${G.lessons.size<LESSONS.length?'Try the Academy tab next mission to learn the rest!':'You completed the whole Academy. Mission graduate!'}</p>
   </div>
   <div class="card"><h2>🎓 Survival lessons</h2>
     <ul style="color:var(--muted);line-height:1.7;padding-left:20px;margin:0">
