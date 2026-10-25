@@ -87,6 +87,34 @@
   @keyframes pop{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
   .snd{position:fixed;top:10px;right:10px;padding:6px 10px;z-index:40;font-size:.85rem}
   .mapinfo{margin-top:10px}
+
+  #eva{position:fixed;inset:0;z-index:100;background:#000;touch-action:none}
+  #evaC{display:block;width:100%;height:100%}
+  #evaHud{position:absolute;left:10px;top:10px;right:10px;display:flex;gap:10px;flex-wrap:wrap;pointer-events:none}
+  .hb{background:rgba(5,8,22,.72);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.85rem;min-width:130px}
+  .hb b{font-family:var(--display);font-size:.8rem;color:var(--accent)}
+  .hb .track{height:7px;background:#16204a;border-radius:5px;margin-top:4px;overflow:hidden}
+  .hb .fill{height:100%}
+  #evaTop{position:absolute;right:10px;top:10px;display:flex;gap:8px}
+  #evaCard{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);width:min(560px,92vw);pointer-events:none}
+  #evaCard .fact{background:rgba(5,8,22,.9);margin:0;animation:pop .3s}
+  #evaCross{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border:2px solid rgba(255,255,255,.55);border-radius:50%;pointer-events:none}
+  #evaHint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);font-size:.8rem;color:var(--muted);background:rgba(5,8,22,.6);padding:4px 10px;border-radius:8px;pointer-events:none;text-align:center;width:max-content;max-width:94vw}
+  #evaOv{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(2,4,14,.7);padding:12px;overflow:auto}
+  #evaOv.hidden{display:none}
+  #evaOv .card{max-width:620px;width:100%;margin:0}
+  #joy{position:absolute;left:14px;bottom:70px;width:120px;height:120px;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);display:none}
+  #joyK{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:rgba(53,224,255,.55)}
+  #lookZ{position:absolute;right:0;top:80px;bottom:60px;width:55%;display:none}
+  #jumpB{position:absolute;right:16px;bottom:70px;width:70px;height:70px;border-radius:50%;text-align:center;display:none;font-size:1.6rem;padding:0;z-index:2}
+  .touch #joy,.touch #lookZ,.touch #jumpB{display:block}
+  .roster{font-size:.88rem}
+  .peer{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px dashed var(--line)}
+  .peer .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .peer button{padding:3px 7px;font-size:.8rem}
+  .modes{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-bottom:14px}
+  .modes button{padding:16px}
+  .modes button b{display:block;font-family:var(--display);margin-bottom:4px}
   @media(max-width:520px){h1{font-size:1.35rem}#map{height:260px}}
 </style>
 </head>
@@ -94,6 +122,16 @@
 <canvas id="stars"></canvas>
 <button class="snd" id="sndBtn" onclick="toggleSound()">🔇 Sound off</button>
 <div id="toasts"></div>
+<div id="eva" class="hidden">
+  <canvas id="evaC"></canvas>
+  <div id="evaCross"></div>
+  <div id="evaHud"></div>
+  <div id="evaTop"><button id="evaBack" onclick="evaFinish('manual')">🏠 Return to habitat (E)</button></div>
+  <div id="evaCard"></div>
+  <div id="evaHint">Click to look around · WASD move · Space jump · Shift sprint · E return</div>
+  <div id="joy"><div id="joyK"></div></div><div id="lookZ"></div><button id="jumpB">⤒</button>
+  <div id="evaOv" class="hidden"></div>
+</div>
 <main>
   <h1>🚀 MISSION SURVIVE</h1>
   <p class="sub">Command a crewed mission. Land, build a base, explore, and learn why space exploration matters.</p>
@@ -101,6 +139,7 @@
   <div id="app"></div>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 "use strict";
 /* ============ utilities ============ */
@@ -406,7 +445,15 @@ const QUIZ = [
   {q:'What does a spacesuit NOT need to provide?',a:'Rain protection',w:['Oxygen','Pressure','Temperature control'],why:'Suits are mini-spacecraft: pressure, oxygen, cooling, and micrometeoroid protection.'},
   {q:'Why does Europa\'s ocean stay liquid under ice?',a:'Jupiter\'s tides flex and heat the moon',w:['Volcanoes on the surface','Sunlight','Heat from Earth'],why:'Tidal heating squeezes the interior like a stress ball, warming it.'},
   {q:'Which is the hardest part of a Mars mission?',a:'Landing a heavy spacecraft in thin air',w:['Finding the planet','Getting dust-free','Losing gravity'],why:'Mars air is too thin for parachutes alone yet thick enough to burn up heat shields.'},
-  {q:'What is the "Overview Effect"?',a:'Astronauts\' awe seeing Earth as a fragile whole',w:['A telescope trick','A rocket engine','A space illness'],why:'Many astronauts report a lasting shift in perspective about our planet.'}
+  {q:'Which law explains rocket propulsion?',a:'Newton\'s third law',w:['Kepler\'s law','Ohm\'s law','Murphy\'s law']},
+  {q:'Which type of engine is efficient for long, gentle thrust?',a:'Ion engine',w:['Firework','Steam engine','Jet engine']},
+  {q:'What are exoplanets?',a:'Planets orbiting other stars',w:['Moons of Jupiter','Comets','Dwarf stars']},
+  {q:'What does Kessler syndrome describe?',a:'A chain reaction of debris collisions in orbit',w:['A solar storm','A rocket fuel mix','A Moon phase']},
+  {q:'Why are spacecraft sterilized before going to Mars?',a:'To avoid contaminating a place that may host life',w:['To make them lighter','To please cleaners','To reduce radiation']},
+  {q:'What color is a Martian sunset?',a:'Blue',w:['Red','Green','Purple']},
+  {q:'What does the transit method detect?',a:'A planet dimming its star',w:['Radio signals from cities','Rocket exhaust','Comet tails']},
+  {q:'Why does Earth stay in one spot in the Moon\'s sky?',a:'The Moon is tidally locked to Earth',w:['Earth is anchored','The Moon does not move','It is a satellite']},
+  {q:'What is the \"Overview Effect\"?',a:'Astronauts\' awe seeing Earth as a fragile whole',w:['A telescope trick','A rocket engine','A space illness'],why:'Many astronauts report a lasting shift in perspective about our planet.'}
 ];
 
 const SPINOFFS = [
@@ -428,6 +475,8 @@ const ACHIEVEMENTS = {
   tech:{icon:'🧪',name:'Innovator',txt:'Research 3 technologies.'},
   survivor:{icon:'🏅',name:'Survivor',txt:'Complete the mission.'},
   greens:{icon:'🌱',name:'Green Thumb',txt:'Harvest 5 times.'},
+  eva:{icon:'🥽',name:'Moonwalker',txt:'Finish a 3D first-person EVA.'},
+  team:{icon:'🤝',name:'Good Teammate',txt:'Send supplies to a crewmate.'},
   student:{icon:'📚',name:'Quick Study',txt:'Finish 3 Academy lessons.'},
   graduate:{icon:'🎖️',name:'Mission Graduate',txt:'Finish every Academy lesson.'}
 };
@@ -521,7 +570,12 @@ const GLOSSARY = [
   ['EVA','Extravehicular Activity: a spacewalk or surface excursion.'],
   ['Tidal heating','Warming of a moon\'s interior as its planet\'s gravity flexes it.'],
   ['Free-fall','Falling around a planet; what an orbit really is.'],
-  ['Spin-off','A technology developed for space that is later used for everyday life.']
+  ['Spin-off','A technology developed for space that is later used for everyday life.'],
+  ['Exoplanet','A planet orbiting a star other than our Sun.'],
+  ['Ion engine','An engine that accelerates charged gas with electricity for efficient, gentle thrust.'],
+  ['Kessler syndrome','A chain reaction of collisions that fills orbit with debris.'],
+  ['Planetary protection','Rules to avoid contaminating other worlds, and Earth, with life.'],
+  ['Tidal locking','When a moon always shows the same face to its planet.']
 ];
 const WORLDS = [
   ['','Earth','Moon','Mars','Europa'],
@@ -532,6 +586,34 @@ const WORLDS = [
   ['Distance (light time)','—','1.3 seconds','3–22 minutes','35–52 minutes'],
   ['Biggest danger','—','Dust, temperature swings','Dust, cold, radiation','Intense radiation']
 ];
+
+LESSONS.push(
+  {id:'engine',icon:'🔥',title:'How rocket engines work',
+   body:['A rocket works by <b>Newton\'s third law</b>: throw mass backwards very fast and you are pushed forwards. It needs no air to push against, so it works in space.','<b>Chemical engines</b> burn fuel with oxidizer for huge thrust, ideal for lifting off a planet. <b>Ion engines</b> use electricity to shoot charged gas at extreme speed: tiny thrust, but they run for months and are very fuel-efficient.','Future ideas include <b>nuclear thermal rockets</b> that could halve the trip to Mars, and <b>solar sails</b> that ride sunlight.'],
+   q:[{q:'Which law explains how rockets move?',a:'Newton\'s third law (action and reaction)',w:['Ohm\'s law','The law of large numbers','Boyle\'s law']},
+      {q:'What are ion engines good at?',a:'Efficient, long, gentle thrust',w:['Launching from Earth','Making loud noise','Cooking food']}],
+   sum:'Rockets work by Newton\'s third law; chemical engines give big thrust for liftoff, ion engines give efficient gentle thrust for deep space.'},
+  {id:'scope',icon:'🔭',title:'Telescopes & other worlds',
+   body:['Astronomers have confirmed over <b>5,000 exoplanets</b>: planets orbiting other stars. Many are found by the <b>transit method</b>: a planet crossing its star makes the starlight dip slightly.','The <b>James Webb Space Telescope</b> sees infrared light, so it can peer through dust and study the atmospheres of distant planets for gases like water vapor and CO₂.','Studying other planets tells us how common Earth-like worlds might be, and where to look for life.'],
+   q:[{q:'What is the transit method?',a:'Watching a star dim as a planet crosses it',w:['Listening for radio','Sending probes to every star','Counting asteroids']},
+      {q:'What kind of light does Webb mainly observe?',a:'Infrared',w:['X-rays only','Ultraviolet only','Sound']}],
+   sum:'Exoplanets are often found when they dim their star in transit; Webb studies their atmospheres in infrared light.'},
+  {id:'debris',icon:'🛰️',title:'Space debris & sustainability',
+   body:['Over <b>27,000 pieces</b> of debris larger than a cricket ball are tracked in orbit, and millions of smaller ones. At 28,000 km/h even a paint fleck can chip a window.','In the <b>Kessler syndrome</b>, collisions create more debris, which causes more collisions. To prevent it, satellites are designed to <b>de-orbit</b> at the end of their life.','Space is a shared environment, like oceans or air. Keeping it clean protects satellites we rely on every day.'],
+   q:[{q:'Why is small debris dangerous?',a:'Orbital speeds are extremely high',w:['It is radioactive','It is magnetic','It is very heavy']},
+      {q:'What is a good habit for old satellites?',a:'De-orbit them safely',w:['Leave them forever','Break them up on purpose','Paint them']}],
+   sum:'Debris travels at ~28,000 km/h; responsible satellites de-orbit to avoid a Kessler-syndrome chain of collisions.'},
+  {id:'protect',icon:'🧼',title:'Planetary protection',
+   body:['Spacecraft are cleaned and baked to avoid carrying Earth microbes to places that might host life, like Mars and Europa. This is called <b>forward contamination</b> prevention.','Samples coming back are handled the other way around: <b>backward contamination</b> rules keep any unknown life safely contained.','Europa Clipper will not land on Europa precisely because scientists do not want to risk contaminating a possible ocean.'],
+   q:[{q:'Why are spacecraft sterilized?',a:'To avoid contaminating other worlds with Earth life',w:['To make them shiny','To keep them cold','To save fuel']},
+      {q:'What is backward contamination?',a:'Bringing alien material back to Earth unsafely',w:['Flying backwards','Landing late','Reusing rockets']}],
+   sum:'Planetary protection keeps Earth microbes away from places that might host life, and protects Earth from unknown samples.'},
+  {id:'sky',icon:'🌌',title:'The sky from other worlds',
+   body:['From the Moon, <b>Earth hangs almost still</b> in the sky because the Moon always shows us the same face. It goes through phases, just like the Moon does for us.','On Mars the Sun looks about two-thirds the size and sunsets are <b>blue</b>, since fine dust scatters red light differently. Tiny moons Phobos and Deimos cross the sky.','From Europa, giant <b>Jupiter</b> fills 24 times more sky than our Moon does for us, and never moves.'],
+   q:[{q:'How does Earth appear from the Moon?',a:'Almost fixed in one spot, with phases',w:['Spinning fast','Invisible','Moving across the sky daily']},
+      {q:'What color are Martian sunsets?',a:'Blue',w:['Green','Pink','Black']}],
+   sum:'Earth hangs nearly still in the lunar sky; Mars has blue sunsets; Jupiter looms huge and fixed over Europa.'}
+);
 
 const MISSIONS = [
   {icon:'🌕',name:'Artemis (NASA)',txt:'Returning humans to the Moon and building a sustained presence at the south pole.'},
@@ -607,19 +689,27 @@ function addSci(n){
 function render(){
   $('#sceneWrap').classList.toggle('hidden', scr!=='surface');
   if(scr!=='land') stopLander();
-  if(scr==='menu') return renderMenu();
-  if(scr==='brief') return renderBrief();
-  if(scr==='land') return renderLand();
-  if(scr==='surface') return renderSurface();
-  if(scr==='end') return renderEnd();
-  if(scr==='exam') return renderExam();
+  if(scr==='menu') renderMenu();
+  else if(scr==='mp') renderMP();
+  else if(scr==='brief') renderBrief();
+  else if(scr==='land') renderLand();
+  else if(scr==='surface') renderSurface();
+  else if(scr==='end') renderEnd();
+  else if(scr==='exam') renderExam();
+  if(MP.room) { mpSync(); }
 }
 
 /* ---------- menu ---------- */
 function renderMenu(){
   const hs = store.get('hs',{});
   app.innerHTML = `
-  <div class="card">
+  <div class="modes">
+    <button onclick="document.getElementById('dests').scrollIntoView({behavior:'smooth'})"><b>🚀 Mission mode</b><small style="color:var(--muted)">Land, survive, build a base and learn. Pick a destination below.</small></button>
+    <button onclick="scr='mp';render()"><b>👥 Multiplayer crew</b><small style="color:var(--muted)">Join friends live: send supplies and explore in 3D together.${MP.room?' <span class="tag">Crew '+esc(MP.code.toUpperCase())+'</span>':''}</small></button>
+    <button onclick="pick3D()"><b>🥽 3D first-person explorer</b><small style="color:var(--muted)">Walk on the Moon, Mars or Europa in low gravity, collect samples, learn.</small></button>
+  </div>
+  ${MP.room?`<div class="card"><div id="roster">${rosterHTML()}</div></div>`:''}
+  <div class="card" id="dests">
     <h2>Choose your destination</h2>
     <p class="sub">Each world has different dangers. Survive, explore, build a base and bring discoveries home.</p>
     <div class="grid">
@@ -644,6 +734,13 @@ function renderMenu(){
       <li><b>Learn:</b> answer mission-control quizzes and read real science from your Codex.</li>
     </ol>
   </div>`;
+}
+function pick3D(){
+  app.innerHTML=`<div class="card"><h2>🥽 3D first-person explorer</h2>
+    <p class="sub">Choose a world. Walk, sprint and jump in the real gravity of that world, collect glowing samples and answer mission-control beacons. Watch your suit oxygen!</p>
+    <div class="grid">${Object.entries(DESTS).map(([k,d])=>`<button class="dest" onclick="startEVA('${k}',false)"><span class="emoji">${d.emoji}</span><b style="font-family:var(--display)">${esc(d.name)}</b><small style="color:var(--muted)">${esc(d.facts[0])}</small></button>`).join('')}</div>
+    ${MP.room?'<p class="sub" style="margin-top:10px">👥 You are in crew '+esc(MP.code.toUpperCase())+': crewmates who pick the same world will appear next to you.</p>':''}
+  </div><div class="row"><button onclick="scr='menu';render()">◀ Back</button></div>`;
 }
 function pickDest(k){ setup.dest=k; scr='brief'; render(); }
 
@@ -825,6 +922,7 @@ function renderSurface(){
     ${G.storm>0?`<div class="fact" style="border-color:var(--warn)"><b style="color:var(--warn)">🌪️ Dust storm</b> — solar output reduced for ${G.storm} more day(s).</div>`:''}
     ${crit.length?`<div class="fact" style="border-color:var(--bad)"><b style="color:var(--bad)">⚠ Warning:</b> ${crit.map(k=>STATS[k].label).join(', ')} critically low!</div>`:''}
   </div>
+  ${MP.room?`<div class="card"><div id="roster">${rosterHTML()}</div></div>`:''}
   ${G.event?renderEvent():`
   <div class="tabs">${tabs.map(([k,l])=>`<button class="${G.tab===k?'sel':''}" onclick="G.tab='${k}';render()">${l}</button>`).join('')}</div>
   ${G.tab==='actions'?tabActions():G.tab==='map'?tabMap():G.tab==='base'?tabBase():G.tab==='research'?tabResearch():G.tab==='learn'?tabLearn():tabCodex()}
@@ -889,6 +987,7 @@ function tabActions(){
     return `<button onclick="doAction('${a.id}')" ${ok?'':'disabled'}><b>${a.icon} ${a.name}</b>
       <small>${a.desc}</small>${gain?`<br><small>Yields ${gain}</small>`:''}</button>`;
   }).join('')}</div>
+  <div class="row" style="margin-top:12px"><button style="flex:1" onclick="startEVA(G.key,true)" ${G.ap>0&&window.THREE?'':'disabled'}><b>🥽 3D surface EVA (first person)</b><br><small style="color:var(--muted)">Walk outside in real gravity, collect samples, answer beacons. Takes one action.</small></button></div>
   <div class="row" style="margin-top:12px"><button class="primary" style="flex:1" onclick="endDay()">🌙 END DAY ${G.ap>0?`(${G.ap} AP unused)`:''}</button></div></div>`;
 }
 
@@ -1143,6 +1242,389 @@ function renderExam(){
     :`<div class="choices">${q.opts.map((o,k)=>`<button onclick="examAnswer(${k})">${o.t}</button>`).join('')}</div>`}</div>`;
 }
 function examAnswer(k){ const q=X.qs[X.i], ok=q.opts[k].correct; if(ok) X.right++; X.fb={ok}; beep(ok?900:200,.2,ok?'triangle':'sawtooth'); render(); }
+
+/* ============ multiplayer (live crew via the room capability) ============ */
+const wname = k => ({moon:'Moon',mars:'Mars',europa:'Europa'}[k]||k);
+const esc = t => String(t==null?'':t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeId = t => String(t||'').replace(/[^a-z0-9]/gi,'').slice(0,40);
+const safeColor = c => /^hsl\(\d{1,3},80%,60%\)$/.test(c) ? c : 'hsl(200,80%,60%)';
+const MP = {room:null, code:'', name:'', msg:'', color:'hsl('+Math.floor(Math.random()*360)+',80%,60%)', unsubs:[], lastHelp:{}};
+
+function myPeerId(){ if(!MP.room) return null; const me=MP.room.peers().find(p=>p.isMe&&p.sameTab); return me?me.peer:null; }
+function mpPresence(patch){ if(MP.room) MP.room.presence(patch).catch(()=>{}); }
+function mpSync(){
+  if(!MP.room||E) return;
+  const base={name:MP.name,color:MP.color,ex:null,ey:null,ez:null,eyaw:null,ew:null};
+  if(G && scr==='surface'){
+    const s=G.s, low=Object.keys(s).reduce((a,k)=>s[k]<s[a]?k:a,'oxygen');
+    mpPresence({...base,mode:'base',world:G.key,day:G.day,sci:G.sci,hp:Math.round(s.health),low:low,lowv:Math.round(s[low])});
+  } else mpPresence({...base,mode:'lobby',world:null,day:null,sci:null,hp:null,low:null,lowv:null});
+}
+async function mpJoin(){
+  const code=($('#mpCode').value||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,12);
+  const name=(($('#mpName').value||'').trim()||'Astronaut').slice(0,16);
+  if(!code){ MP.msg='Enter a crew code first.'; return renderMP(); }
+  MP.name=name; MP.msg='Connecting…'; renderMP();
+  try{
+    const room = (window.claude && claude.use) ? await claude.use('room') : null;
+    if(!room){ MP.msg='Multiplayer is not available in this view. Open the shared artifact link while signed in (a plain saved file cannot connect).'; return renderMP(); }
+    const nr = await room.join('crew-'+code);
+    MP.room=nr; MP.code=code; MP.msg='';
+    MP.unsubs.push(nr.onPeers(()=>updateRoster()));
+    MP.unsubs.push(nr.on('help',onHelp));
+    MP.unsubs.push(nr.on('sample',onTeamSample));
+    mpSync(); renderMP();
+  }catch(e){ MP.msg='Could not join: '+(e&&e.message||'unknown error'); MP.room=null; renderMP(); }
+}
+function mpLeave(){
+  MP.unsubs.forEach(u=>{try{u()}catch(e){}}); MP.unsubs=[];
+  if(MP.room){ try{ MP.room.leave(); }catch(e){} }
+  MP.room=null; MP.code=''; renderMP();
+}
+function updateRoster(){ const el=document.getElementById('roster'); if(el) el.innerHTML=rosterHTML(); }
+function rosterHTML(){
+  if(!MP.room) return '';
+  const me=myPeerId();
+  const ps=MP.room.peers().filter(p=>p.kind==='viewer');
+  const team=ps.reduce((a,p)=>a+(Number(p.presence.sci)||0),0);
+  const canHelp = G && !G.over && scr==='surface';
+  const rows=[...ps].sort((a,b)=>(Number(b.presence.sci)||0)-(Number(a.presence.sci)||0)).map(p=>{
+    const pr=p.presence||{}, mine=p.peer===me, w=DESTS[pr.world];
+    const where = pr.mode==='eva'?'🥽 on EVA':pr.mode==='base'&&w?`${w.emoji} ${wname(pr.world)} · day ${Number(pr.day)||'?'}`:'🛰️ in lobby';
+    const stat = pr.mode==='base'?` · ❤️ ${Number(pr.hp)||0} · 🔬 ${Number(pr.sci)||0}${pr.lowv<35?` · ⚠ ${esc(STATS[pr.low]?STATS[pr.low].label:'')} low`:''}`:'';
+    const btns = (!mine&&canHelp&&pr.mode==='base') ? ['water','oxygen','food','power'].map(r=>`<button title="Send 10 ${r}" onclick="sendHelp('${safeId(p.peer)}','${r}')">${STATS[r].icon}</button>`).join('') : '';
+    return `<div class="peer"><span class="dot" style="background:${safeColor(pr.color)}"></span><b>${esc(pr.name||'Astronaut')}${mine?' (you)':''}</b><span class="sub" style="margin:0">${where}${stat}</span>${btns?`<span style="margin-left:auto">${btns}</span>`:''}</div>`;
+  }).join('');
+  return `<div class="roster"><div style="margin-bottom:4px"><span class="tag">Crew ${esc(MP.code.toUpperCase())}</span><span class="tag">👥 ${ps.length} online</span><span class="tag">🔬 Team science ${team}</span></div>${rows||'<p class="sub">Waiting for crewmates to join…</p>'}</div>`;
+}
+function sendHelp(peerId,res){
+  if(!MP.room||!G||G.over||!['oxygen','water','food','power'].includes(res)) return;
+  if(G.s[res]<35){ toast('Keep at least 35 for yourself first!'); return; }
+  G.s[res]=clamp(G.s[res]-10);
+  MP.room.emit('help',{to:peerId,res,amt:10,from:MP.name}).catch(()=>{});
+  log(`🤝 You sent 10 ${STATS[res].icon} to a crewmate.`); toast(`🤝 Sent 10 ${STATS[res].icon}`); ach('team'); learn('Real crews share resources: on the ISS, astronauts from many countries pool supplies and rely on each other for safety.');
+  render();
+}
+function onHelp(m){
+  if(m.sameTab||!m.data||m.data.to!==myPeerId()) return;
+  const res=m.data.res; if(!['oxygen','water','food','power'].includes(res)) return;
+  const now=Date.now(); if(MP.lastHelp[m.peer]&&now-MP.lastHelp[m.peer]<1500) return; MP.lastHelp[m.peer]=now;
+  if(G&&!G.over&&scr==='surface'){
+    G.s[res]=clamp(G.s[res]+10);
+    log(`🤝 ${esc(String(m.data.from||'A crewmate').slice(0,16))} sent you 10 ${STATS[res].icon}.`);
+    toast(`🤝 ${esc(String(m.data.from||'A crewmate').slice(0,16))} sent you 10 ${STATS[res].icon}!`); beep(740,.2,'triangle'); render();
+  }
+}
+function onTeamSample(m){
+  if(m.sameTab||!E||!m.data||m.data.ew!==E.ew) return;
+  const it=E.items[m.data.i|0]; if(!it||it.got) return;
+  it.got=true; it.mesh.visible=false; it.beam.visible=false; E.team++;
+  const who=(m.data&&m.data.who)?esc(String(m.data.who).slice(0,16)):'A crewmate';
+  evaToast(`👥 ${who} collected <b>${esc(it.name)}</b>`);
+}
+
+function renderMP(){
+  const avail=!!(window.claude&&claude.use);
+  app.innerHTML=`
+  <div class="card">
+    <h2>👥 Multiplayer crew</h2>
+    <p class="sub">Join a crew with a shared code. Everyone with the same code is on the same team, live: you see each other's progress, send supplies to a struggling crewmate, and explore the <b>same 3D surface together</b>, where you can see each other and share samples.</p>
+    ${MP.room?`
+      <div id="roster">${rosterHTML()}</div>
+      <div class="row" style="margin-top:12px">
+        <button onclick="scr='menu';render()">🚀 Start a mission as a crew</button>
+        <button onclick="mpLeave()">🚪 Leave crew</button>
+      </div>
+      <h3 style="margin-top:14px">🥽 Explore a world in 3D together</h3>
+      <div class="row">${Object.entries(DESTS).map(([k,d])=>`<button onclick="startEVA('${k}',false)">${d.emoji} ${wname(k)}</button>`).join('')}</div>
+      <p class="sub" style="margin-top:8px">Your crewmates must press the same world button to appear in the same place.</p>
+    `:`
+      <label class="sub" for="mpName">Callsign</label>
+      <input id="mpName" type="text" maxlength="16" value="${esc(MP.name||'Astronaut')}">
+      <label class="sub" for="mpCode" style="display:block;margin-top:10px">Crew code (agree on one with your friends)</label>
+      <input id="mpCode" type="text" maxlength="12" placeholder="e.g. apollo7" value="${esc(MP.code)}">
+      <div class="row" style="margin-top:12px"><button class="primary" style="flex:1" onclick="mpJoin()">🔗 Join crew</button></div>
+      ${avail?'':'<p class="sub" style="margin-top:10px">⚠ Multiplayer only works in the shared artifact page, not in a saved file.</p>'}
+    `}
+    ${MP.msg?`<div class="fact" style="border-color:var(--warn)">${esc(MP.msg)}</div>`:''}
+  </div>
+  <div class="row"><button onclick="scr='menu';render()">◀ Back to menu</button></div>`;
+}
+
+/* ============ 3D first-person EVA ============ */
+const EVAFACTS = {
+  moon:[
+    {t:'rock',n:'Basalt sample',f:'Dark lunar "seas" (maria) are ancient lava plains. Basalt samples show they erupted 3 to 4 billion years ago.'},
+    {t:'rock',n:'Highland anorthosite',f:'The bright lunar highlands are made of anorthosite, formed when the young Moon was covered in a magma ocean.'},
+    {t:'dust',n:'Regolith scoop',f:'Lunar dust grains are jagged and glassy because wind and water never rounded them. They can wear out suit fabric.'},
+    {t:'dust',n:'Solar wind soil',f:'Moon dust holds helium-3 and hydrogen implanted by the solar wind over billions of years.'},
+    {t:'ice',n:'Ice-bearing soil',f:'Radar and probes found water ice in permanently shadowed craters at the poles, cold enough (−230 °C) to keep it for billions of years.'},
+    {t:'ice',n:'Crater-floor frost',f:'Ice on the Moon may have come from comets and asteroids, or from the solar wind reacting with rock.'}],
+  mars:[
+    {t:'rock',n:'Sedimentary layers',f:'Layered rocks in Jezero crater formed in an ancient lake. Layers like this can preserve signs of life.'},
+    {t:'rock',n:'Hematite spherules',f:'Tiny iron-rich "blueberries" on Mars formed in water, which tells us groundwater once flowed there.'},
+    {t:'dust',n:'Rusty dust',f:'Mars is red because its dust contains iron oxide, the same chemical as rust.'},
+    {t:'dust',n:'Perchlorate soil',f:'Martian soil contains toxic perchlorates that must be washed out before growing food.'},
+    {t:'ice',n:'Subsurface ice',f:'Fresh craters on Mars have exposed bright water ice just beneath the dust, a resource for future settlers.'},
+    {t:'ice',n:'CO₂ frost',f:'Winter on Mars freezes some of the carbon dioxide atmosphere into dry-ice frost at the poles.'}],
+  europa:[
+    {t:'rock',n:'Salt-rich ice',f:'Europa\'s cracks are stained red-brown, probably by salts from the ocean below, darkened by radiation.'},
+    {t:'rock',n:'Impact ejecta',f:'Europa has few craters, so its surface is young, only around 40 to 90 million years old.'},
+    {t:'dust',n:'Irradiated frost',f:'Jupiter\'s radiation splits surface ice into oxygen and hydrogen, creating a thin oxygen atmosphere.'},
+    {t:'dust',n:'Sulfur-stained snow',f:'Sulfur from the volcanic moon Io rains onto Europa and tints its ice.'},
+    {t:'ice',n:'Ocean-water ice',f:'Europa\'s ocean may hold twice the water of all Earth\'s oceans, kept liquid by tidal heating.'},
+    {t:'ice',n:'Plume deposit',f:'Hubble hinted at water plumes erupting from Europa. Landing near one could sample the ocean without drilling.'}]
+};
+const EVACOL = {rock:'#ffd27f',ice:'#7fe3ff',dust:'#ffb870',quiz:'#c78fff'};
+const EVAREW = {rock:{sci:6,mat:3},ice:{sci:4,water:6},dust:{sci:3,mat:4},quiz:{sci:0}};
+
+let E=null;
+function hash32(s){ let h=2166136261; for(const c of String(s)){ h^=c.charCodeAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function evaToast(html){ const el=$('#evaCard'); el.innerHTML=`<div class="fact">${html}</div>`; clearTimeout(E&&E.cardT); if(E) E.cardT=setTimeout(()=>{ if(E) el.innerHTML=''; },7000); }
+
+function startEVA(wk, mission){
+  if(E) return;
+  if(!window.THREE){ toast('⚠ The 3D engine could not load (it needs an internet connection).'); return; }
+  if(mission){ if(!G||G.ap<1) return; G.ap--; }
+  const d=DESTS[wk], grav={moon:1.62,mars:3.71,europa:1.31}[wk];
+  const seedStr = MP.room ? MP.code+':'+wk : null;
+  const rng = mulberry(seedStr?hash32(seedStr):(Math.random()*4294967296)>>>0);
+  const ew = seedStr || ('solo'+Math.random().toString(36).slice(2));
+  const P = {
+    moon:{bg:0x000206,fog:0x05060c,fogD:.0035,ground:[.55,.55,.58],rock:0x77777f,sun:0xffffff,amb:0x303040,sunI:1.35},
+    mars:{bg:0xb87a55,fog:0xc88a62,fogD:.0085,ground:[.70,.34,.18],rock:0x8a4a2c,sun:0xffe2c0,amb:0x7a4a38,sunI:1.05},
+    europa:{bg:0x000104,fog:0x070a14,fogD:.004,ground:[.80,.89,.94],rock:0xaec7d6,sun:0xfff4dc,amb:0x2a3a55,sunI:.85}
+  }[wk];
+  const cv=$('#evaC'), wrap=$('#eva');
+  wrap.classList.remove('hidden'); $('#evaOv').classList.add('hidden'); $('#evaCard').innerHTML='';
+  document.body.style.overflow='hidden';
+  const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  const scene=new THREE.Scene(); scene.background=new THREE.Color(P.bg); scene.fog=new THREE.FogExp2(P.fog,P.fogD);
+  const camera=new THREE.PerspectiveCamera(72,1,.1,700); camera.rotation.order='YXZ';
+  function resize(){ const w=wrap.clientWidth||innerWidth,h=wrap.clientHeight||innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+  resize(); addEventListener('resize',resize);
+  scene.add(new THREE.AmbientLight(P.amb,1.1));
+  const sun=new THREE.DirectionalLight(P.sun,P.sunI); sun.position.set(120,90,60); scene.add(sun);
+  // sky
+  const sky=new THREE.Group(); scene.add(sky);
+  if(wk!=='mars'){ const pts=[]; for(let i=0;i<700;i++){ const a=rng()*6.283,b=Math.acos(2*rng()-1),r=500; pts.push(r*Math.sin(b)*Math.cos(a),Math.abs(r*Math.cos(b))*.9+10,r*Math.sin(b)*Math.sin(a)); }
+    const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
+    const st=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:1.6,sizeAttenuation:false,fog:false})); sky.add(st); }
+  const sunMesh=new THREE.Mesh(new THREE.SphereGeometry(wk==='europa'?5:wk==='mars'?9:12,16,12),new THREE.MeshBasicMaterial({color:P.sun,fog:false})); sunMesh.position.set(300,220,150); sky.add(sunMesh);
+  if(wk==='moon'){ const e=new THREE.Mesh(new THREE.SphereGeometry(26,24,16),new THREE.MeshBasicMaterial({color:0x3a7bd5,fog:false})); e.position.set(-260,170,-300); sky.add(e);
+    const c=new THREE.Mesh(new THREE.SphereGeometry(26.5,12,8),new THREE.MeshBasicMaterial({color:0xffffff,fog:false,transparent:true,opacity:.35,wireframe:true})); c.position.copy(e.position); sky.add(c); }
+  if(wk==='europa'){ const c2=document.createElement('canvas'); c2.width=256;c2.height=256; const x=c2.getContext('2d'); ['#d9a066','#b9763f','#e8c9a0','#a1612f','#d9a066','#c88a52','#e8c9a0'].forEach((col,i)=>{x.fillStyle=col;x.fillRect(0,i*37,256,37);}); x.fillStyle='rgba(200,60,40,.7)'; x.beginPath(); x.ellipse(170,150,30,16,0,0,7); x.fill();
+    const j=new THREE.Mesh(new THREE.SphereGeometry(120,32,24),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c2),fog:false})); j.position.set(-280,150,-420); sky.add(j); }
+  // terrain
+  const ph=[rng()*6.28,rng()*6.28,rng()*6.28,rng()*6.28,rng()*6.28];
+  const craters=Array.from({length:9},()=>({x:rng()*190-95,z:rng()*190-95,r:8+rng()*16,d:1.2+rng()*2.4}));
+  const sm=(a,b,v)=>{ const t=clamp((v-a)/(b-a),0,1); return t*t*(3-2*t); };
+  function hgt(x,z){
+    let h=Math.sin(x*.045+ph[0])*2.2+Math.sin(z*.05+ph[1])*2+Math.sin((x+z)*.11+ph[2])*.8+Math.sin(x*.2+ph[3])*Math.sin(z*.17+ph[4])*.35;
+    for(const c of craters){ const dd=Math.hypot(x-c.x,z-c.z)/c.r; if(dd<1.25){ h-=c.d*(1-dd*dd)*(dd<1?1:0); if(dd>.85&&dd<1.25) h+=.6*Math.exp(-Math.pow((dd-1.05)*6,2)); } }
+    return h*sm(8,26,Math.hypot(x,z));
+  }
+  const SEG=120, SIZE=260;
+  const tg=new THREE.PlaneGeometry(SIZE,SIZE,SEG,SEG); tg.rotateX(-Math.PI/2);
+  const pos=tg.attributes.position, col=new Float32Array(pos.count*3);
+  for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=hgt(x,z); pos.setY(i,h);
+    const n=.82+.18*Math.sin(x*.31+z*.23)*Math.sin(x*.07-z*.11)+.07*Math.sin(x*1.3)*Math.cos(z*1.1);
+    const sh=1+h*.03;
+    col[i*3]=P.ground[0]*n*sh; col[i*3+1]=P.ground[1]*n*sh; col[i*3+2]=P.ground[2]*n*sh; }
+  tg.setAttribute('color',new THREE.BufferAttribute(col,3)); tg.computeVertexNormals();
+  scene.add(new THREE.Mesh(tg,new THREE.MeshLambertMaterial({vertexColors:true,flatShading:true})));
+  // rocks
+  const rockMat=new THREE.MeshLambertMaterial({color:P.rock,flatShading:true});
+  for(let i=0;i<90;i++){ const a=rng()*6.283,r=14+rng()*105,x=Math.cos(a)*r,z=Math.sin(a)*r,sc=.3+rng()*1.3;
+    const m=new THREE.Mesh(new THREE.DodecahedronGeometry(sc,0),rockMat); m.position.set(x,hgt(x,z)+sc*.35,z); m.rotation.set(rng()*3,rng()*3,rng()*3); m.scale.y=.6+rng()*.5; scene.add(m); }
+  // habitat
+  const hab=new THREE.Group(); const white=new THREE.MeshLambertMaterial({color:0xdde3ff});
+  const dome=new THREE.Mesh(new THREE.SphereGeometry(5,28,14,0,Math.PI*2,0,Math.PI/2),white); hab.add(dome);
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(5.2,5.4,.8,28),new THREE.MeshLambertMaterial({color:0x8e98c8})); base.position.y=.2; hab.add(base);
+  const door=new THREE.Mesh(new THREE.BoxGeometry(1.8,2.6,.4),new THREE.MeshLambertMaterial({color:0x35e0ff,emissive:0x0a5566})); door.position.set(0,1.3,5); hab.add(door);
+  const ant=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,4,6),white); ant.position.set(-1,6.5,0); hab.add(ant);
+  const beacon=new THREE.Mesh(new THREE.SphereGeometry(.25,8,8),new THREE.MeshBasicMaterial({color:0xff5d6c})); beacon.position.set(-1,8.6,0); hab.add(beacon);
+  for(let i=0;i<3;i++){ const pn=new THREE.Mesh(new THREE.BoxGeometry(5,.15,2.4),new THREE.MeshLambertMaterial({color:0x2b4aa8,emissive:0x0a1a55})); pn.position.set(9+i*5.5,1.8,-4); pn.rotation.x=-.5; hab.add(pn); const pole=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,1.8,6),white); pole.position.set(9+i*5.5,.9,-4); hab.add(pole); }
+  const rov=new THREE.Group(); const rb=new THREE.Mesh(new THREE.BoxGeometry(3.2,1,2),new THREE.MeshLambertMaterial({color:0xe8edff})); rb.position.y=1.1; rov.add(rb);
+  [[-1.2,-1],[1.2,-1],[-1.2,1],[1.2,1]].forEach(([wx,wz])=>{ const w=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.4,12),new THREE.MeshLambertMaterial({color:0x222222})); w.rotation.x=Math.PI/2; w.position.set(wx,.55,wz*1.1); rov.add(w); });
+  rov.position.set(-9,0,9); hab.add(rov);
+  hab.position.y=hgt(0,0); scene.add(hab);
+  rov.position.y=hgt(-9,9)-hgt(0,0);
+  // collectibles
+  const facts=EVAFACTS[wk]; const items=[]; const N=facts.length+3;
+  for(let i=0;i<N;i++){
+    const quiz=i>=facts.length, f=quiz?null:facts[i], type=quiz?'quiz':f.t;
+    const a=rng()*6.283, r=20+rng()*80, x=Math.cos(a)*r, z=Math.sin(a)*r, y=hgt(x,z);
+    const colr=new THREE.Color(EVACOL[type]);
+    const mesh=new THREE.Mesh(quiz?new THREE.OctahedronGeometry(.7):new THREE.IcosahedronGeometry(.55,0),new THREE.MeshStandardMaterial({color:colr,emissive:colr,emissiveIntensity:.8,flatShading:true}));
+    mesh.position.set(x,y+1.1,z); scene.add(mesh);
+    const beam=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,16,6),new THREE.MeshBasicMaterial({color:colr,transparent:true,opacity:.35,fog:false})); beam.position.set(x,y+8,z); scene.add(beam);
+    items.push({i,type,mesh,beam,x,z,y,got:false,name:quiz?'Mission-control beacon':f.n,fact:quiz?null:f.f,quiz});
+  }
+  // peers
+  const avatars=new Map();
+  function makeAvatar(name,color){
+    const g=new THREE.Group(); const c=new THREE.Color(safeColor(color));
+    const body=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,1.1,10),new THREE.MeshLambertMaterial({color:0xf2f4ff})); body.position.y=.9; g.add(body);
+    const pack=new THREE.Mesh(new THREE.BoxGeometry(.5,.8,.25),new THREE.MeshLambertMaterial({color:c})); pack.position.set(0,1,-.35); g.add(pack);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.32,12,10),new THREE.MeshLambertMaterial({color:0xf2f4ff})); head.position.y=1.7; g.add(head);
+    const vis=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),new THREE.MeshBasicMaterial({color:c})); vis.position.set(0,1.72,.18); g.add(vis);
+    const legs=new THREE.Mesh(new THREE.BoxGeometry(.5,.4,.3),new THREE.MeshLambertMaterial({color:0xdde3ff})); legs.position.y=.2; g.add(legs);
+    const cc=document.createElement('canvas'); cc.width=256; cc.height=64; const x=cc.getContext('2d'); x.font='bold 30px sans-serif'; x.textAlign='center'; x.fillStyle='rgba(5,8,22,.7)'; x.fillRect(0,8,256,48); x.fillStyle=safeColor(color); x.fillText(String(name||'Astronaut').slice(0,16),128,44);
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cc),fog:false,depthTest:false})); sp.scale.set(3,.75,1); sp.position.y=2.6; g.add(sp);
+    scene.add(g); return g;
+  }
+  E={wk,d,mission:!!mission,ew,items,team:0,renderer,scene,camera,hab,hgt,grav,
+     px:0,pz:14,py:0,vy:0,yaw:0,sky,pitch:0,o2:100,dose:0,paused:false,done:false,
+     keys:{},joy:{x:0,y:0},collected:[],quizRight:0,quizTotal:0,last:performance.now(),hudT:0,presT:0,cardT:0,avatars,makeAvatar,resize,
+     elapsed:0,lock:false};
+  bindEvaInput();
+  if(window.matchMedia&&matchMedia('(pointer:coarse)').matches) wrap.classList.add('touch'); else wrap.classList.remove('touch');
+  evaToast(`🥽 <b>EVA on ${esc(d.name)}</b>: find the glowing markers. Gravity here is only <b>${grav} m/s²</b> — try jumping!`);
+  E.raf=requestAnimationFrame(evaFrame);
+}
+
+function bindEvaInput(){
+  const kd=e=>{ if(!E||E.done) return; const k=e.key.toLowerCase();
+    if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
+    E.keys[k]=true; if(k==='e') evaFinish('manual'); };
+  const ku=e=>{ if(E) E.keys[e.key.toLowerCase()]=false; };
+  const mm=e=>{ if(!E||E.paused||!E.lock) return; E.yaw-=e.movementX*.0024; E.pitch=clamp(E.pitch-e.movementY*.0024,-1.4,1.4); };
+  const pl=()=>{ if(E) E.lock=(document.pointerLockElement===$('#evaC')); };
+  const click=()=>{ if(E&&!E.paused&&!E.done&&!E.lock){ try{ const r=$('#evaC').requestPointerLock(); if(r&&r.catch) r.catch(()=>{}); }catch(e){} } };
+  addEventListener('keydown',kd); addEventListener('keyup',ku); addEventListener('mousemove',mm);
+  document.addEventListener('pointerlockchange',pl); $('#evaC').addEventListener('click',click);
+  // touch controls
+  let joyId=null,jx0=0,jy0=0, lookId=null,lx=0,ly=0;
+  const joy=$('#joy'),knob=$('#joyK'),look=$('#lookZ'),jump=$('#jumpB');
+  const jd=e=>{ e.preventDefault(); joyId=e.pointerId; const r=joy.getBoundingClientRect(); jx0=r.left+r.width/2; jy0=r.top+r.height/2; jm(e); try{joy.setPointerCapture(e.pointerId)}catch(_){} };
+  const jm=e=>{ if(e.pointerId!==joyId||!E) return; let dx=(e.clientX-jx0)/50,dy=(e.clientY-jy0)/50; const m=Math.hypot(dx,dy); if(m>1){dx/=m;dy/=m;} E.joy.x=dx; E.joy.y=dy; knob.style.left=(40+dx*40)+'px'; knob.style.top=(40+dy*40)+'px'; };
+  const ju=e=>{ if(e.pointerId!==joyId) return; joyId=null; if(E){E.joy.x=0;E.joy.y=0;} knob.style.left='40px'; knob.style.top='40px'; };
+  joy.addEventListener('pointerdown',jd); joy.addEventListener('pointermove',jm); joy.addEventListener('pointerup',ju); joy.addEventListener('pointercancel',ju);
+  look.addEventListener('pointerdown',e=>{ e.preventDefault(); lookId=e.pointerId; lx=e.clientX; ly=e.clientY; try{look.setPointerCapture(e.pointerId)}catch(_){} });
+  look.addEventListener('pointermove',e=>{ if(e.pointerId!==lookId||!E||E.paused) return; E.yaw-=(e.clientX-lx)*.005; E.pitch=clamp(E.pitch-(e.clientY-ly)*.005,-1.4,1.4); lx=e.clientX; ly=e.clientY; });
+  const lu=e=>{ if(e.pointerId===lookId) lookId=null; }; look.addEventListener('pointerup',lu); look.addEventListener('pointercancel',lu);
+  jump.addEventListener('pointerdown',e=>{ e.preventDefault(); if(E) E.keys[' ']=true; }); jump.addEventListener('pointerup',()=>{ if(E) E.keys[' ']=false; });
+  E.unbind=()=>{ removeEventListener('keydown',kd); removeEventListener('keyup',ku); removeEventListener('mousemove',mm); document.removeEventListener('pointerlockchange',pl); $('#evaC').removeEventListener('click',click);
+    // replace touch nodes to drop their listeners
+    ['#joy','#lookZ','#jumpB'].forEach(sel=>{ const n=$(sel); n.replaceWith(n.cloneNode(true)); }); $('#joyK').style.left='40px'; $('#joyK').style.top='40px'; };
+}
+
+function evaFrame(t){
+  if(!E) return; E.raf=requestAnimationFrame(evaFrame);
+  const dt=Math.min(.05,(t-E.last)/1000); E.last=t;
+  if(!E.paused&&!E.done) evaUpdate(dt,t);
+  E.renderer.render(E.scene,E.camera);
+}
+function evaUpdate(dt,t){
+  const K=E.keys; E.elapsed+=dt;
+  let fx=(K['w']||K['arrowup']?1:0)-(K['s']||K['arrowdown']?1:0)-E.joy.y;
+  let sx=(K['d']?1:0)-(K['a']?1:0)+E.joy.x;
+  if(K['arrowleft']) E.yaw+=1.8*dt; if(K['arrowright']) E.yaw-=1.8*dt;
+  const m=Math.hypot(fx,sx); if(m>1){fx/=m;sx/=m;}
+  const sp=(K['shift']?7.5:4.6);
+  const sinY=Math.sin(E.yaw), cosY=Math.cos(E.yaw);
+  let nx=E.px+(-sinY*fx+cosY*sx)*sp*dt, nz=E.pz+(-cosY*fx-sinY*sx)*sp*dt;
+  const r=Math.hypot(nx,nz); if(r>112){ nx*=112/r; nz*=112/r; }
+  if(r<6.2){ const k=6.2/Math.max(r,.01); nx*=k; nz*=k; }
+  E.px=nx; E.pz=nz;
+  // low-gravity jumping: same take-off speed, different gravity
+  const g=E.grav;
+  if(K[' ']&&E.py<=.001){ E.vy=4.4; }
+  E.vy-=g*dt; E.py+=E.vy*dt; if(E.py<0){ E.py=0; E.vy=0; }
+  const gy=E.hgt(E.px,E.pz), bob=(m>0&&E.py<.05)?Math.sin(t/140)*.04:0;
+  E.camera.position.set(E.px,gy+E.py+1.7+bob,E.pz); E.camera.rotation.set(E.pitch,E.yaw,0);
+  // sky follows camera so it feels infinitely far
+  E.sky.position.copy(E.camera.position);
+  // suit oxygen & radiation
+  const near=Math.hypot(E.px,E.pz)<9;
+  E.o2=clamp(E.o2+(near?20:-.58)*dt);
+  if(E.wk==='europa'&&!near) E.dose+=dt*.7;
+  // collectibles
+  for(const it of E.items){ if(it.got) continue;
+    it.mesh.rotation.y+=dt*1.6; it.mesh.position.y=it.y+1.3+Math.sin(t/400+it.i)*.25;
+    if(Math.hypot(E.px-it.x,E.pz-it.z)<2.4 && Math.abs(gy+E.py-it.y)<4) evaCollect(it); }
+  // multiplayer
+  if(MP.room){
+    E.presT+=dt;
+    if(E.presT>.12){ E.presT=0; mpPresence({mode:'eva',ew:E.ew,ex:+E.px.toFixed(2),ey:+(gy+E.py).toFixed(2),ez:+E.pz.toFixed(2),eyaw:+E.yaw.toFixed(2),name:MP.name,color:MP.color,world:E.wk,sci:null,hp:null,day:null,low:null,lowv:null}); }
+    const me=myPeerId(), seen=new Set();
+    for(const p of MP.room.peers()){ if(p.peer===me||p.kind!=='viewer') continue; const pr=p.presence||{};
+      if(pr.mode!=='eva'||pr.ew!==E.ew||typeof pr.ex!=='number') continue;
+      seen.add(p.peer); let av=E.avatars.get(p.peer); if(!av){ av=E.makeAvatar(pr.name,pr.color); E.avatars.set(p.peer,av); }
+      av.position.x+=(pr.ex-av.position.x)*Math.min(1,dt*10); av.position.z+=(pr.ez-av.position.z)*Math.min(1,dt*10); av.position.y+=(pr.ey-av.position.y)*Math.min(1,dt*10); av.rotation.y=(Number(pr.eyaw)||0)+Math.PI; }
+    for(const [id,av] of E.avatars) if(!seen.has(id)){ E.scene.remove(av); E.avatars.delete(id); }
+  }
+  // HUD
+  E.hudT+=dt;
+  if(E.hudT>.1){ E.hudT=0; evaHud(); }
+  if(E.o2<=0&&!E.done) evaFinish('o2');
+}
+function evaHud(){
+  const left=E.items.filter(i=>!i.got&&!i.quiz).length, dist=Math.round(Math.hypot(E.px,E.pz));
+  const ang=Math.atan2(-E.px,-E.pz)-E.yaw-Math.PI; // direction to habitat relative to view
+  const o2c=E.o2>50?'var(--good)':E.o2>25?'var(--warn)':'var(--bad)';
+  const peers=MP.room?[...E.avatars.keys()].length:0;
+  $('#evaHud').innerHTML=`
+    <div class="hb">🫁 <b>SUIT O₂ ${Math.round(E.o2)}%</b><div class="track"><div class="fill" style="width:${E.o2}%;background:${o2c}"></div></div></div>
+    <div class="hb">🧭 <b>HABITAT ${dist} m</b> <span style="display:inline-block;transform:rotate(${(-ang*180/Math.PI).toFixed(0)}deg);font-size:1.1rem">⬆</span></div>
+    <div class="hb">🔬 <b>SAMPLES ${E.collected.length}</b> · ${left} left${MP.room?` · 👥 ${peers+1} on EVA`:''}</div>
+    ${E.wk==='europa'?`<div class="hb">☢️ <b>DOSE ${E.dose.toFixed(0)}</b> (higher = worse)</div>`:''}`;
+}
+function evaCollect(it){
+  it.got=true; it.mesh.visible=false; it.beam.visible=false; beep(820,.15,'triangle');
+  if(MP.room) MP.room.emit('sample',{ew:E.ew,i:it.i,who:MP.name}).catch(()=>{});
+  if(it.quiz) return evaQuiz(it);
+  E.collected.push(it);
+  evaToast(`✅ <b>${esc(it.name)}</b><br>${esc(it.fact)}`);
+}
+function evaQuiz(it){
+  const q=pick(QUIZ), opts=shuffle([{t:q.a,c:true},...q.w.map(t=>({t,c:false}))]);
+  E.paused=true; if(document.pointerLockElement) document.exitPointerLock();
+  const ov=$('#evaOv'); ov.classList.remove('hidden');
+  ov.innerHTML=`<div class="card" style="border-color:var(--accent)"><h2>📡 Mission-control beacon</h2><p style="font-size:1.05rem">${esc(q.q)}</p>
+    <div class="choices">${opts.map((o,i)=>`<button onclick="evaAnswer(${i})">${esc(o.t)}</button>`).join('')}</div></div>`;
+  E.curQ={q,opts};
+}
+function evaAnswer(i){
+  const {q,opts}=E.curQ, ok=opts[i].c; E.quizTotal++; if(ok){ E.quizRight++; beep(900,.2,'triangle'); } else beep(200,.25,'sawtooth');
+  $('#evaOv').innerHTML=`<div class="card" style="border-color:${ok?'var(--good)':'var(--bad)'}"><h2>${ok?'✅ Correct!':'❌ Not quite'}</h2><p>${esc(q.why)}</p>
+    <button class="primary" onclick="evaResume()">Back to the surface ▶</button></div>`;
+  E.learnedQ=(E.learnedQ||[]).concat(q.why);
+}
+function evaResume(){ $('#evaOv').classList.add('hidden'); if(E){ E.paused=false; E.last=performance.now(); } }
+
+function evaFinish(reason){
+  if(!E||E.done) return; E.done=true; if(document.pointerLockElement) document.exitPointerLock();
+  let sci=0,mat=0,water=0; const learned=[];
+  E.collected.forEach(it=>{ const r=EVAREW[it.type]; sci+=r.sci||0; mat+=r.mat||0; water+=r.water||0; learned.push(it.fact); });
+  sci+=E.quizRight*6; (E.learnedQ||[]).forEach(w=>learned.push(w));
+  const dose=Math.round(E.dose), emergency=reason==='o2';
+  if(E.mission&&G){
+    addSci(Math.round(sci*mods().sci)); G.mat+=mat; applyDelta({water:water,morale:6,oxygen:-8});
+    if(dose) applyDelta({health:-Math.round(dose*.35)},true);
+    if(emergency) applyDelta({health:-12,morale:-6});
+    log(`🥽 3D EVA: ${E.collected.length} samples, ${E.quizRight}/${E.quizTotal} beacon answers right.${emergency?' Suit oxygen ran out — emergency recovery!':''}`);
+    learned.forEach(f=>learn(f)); ach('eva');
+  }
+  const ov=$('#evaOv'); ov.classList.remove('hidden');
+  ov.innerHTML=`<div class="card"><h2>${emergency?'⚠ Suit oxygen low: emergency return':'🏠 Back in the habitat'}</h2>
+    <p>Samples: <b>${E.collected.length}</b> · Beacon questions right: <b>${E.quizRight}/${E.quizTotal}</b> · Science: <b>+${sci}</b>${E.mission?'':' <span class="tag">practice mode</span>'}${MP.room?` · 👥 Team samples: <b>${E.collected.length+E.team}</b>`:''}</p>
+    ${E.wk==='europa'?`<p class="sub">☢️ Radiation dose: ${dose}. On the real Europa, an unshielded person would receive a lethal dose in about a day.</p>`:''}
+    <h3>What you learned</h3>
+    ${learned.length?learned.map(f=>`<div class="fact">${esc(f)}</div>`).join(''):'<p class="sub">Collect glowing markers next time to learn more!</p>'}
+    <button class="primary" style="width:100%" onclick="evaExit()">Continue ▶</button></div>`;
+}
+function evaExit(){
+  if(!E) return; const wasMission=E.mission;
+  cancelAnimationFrame(E.raf); removeEventListener('resize',E.resize); E.unbind();
+  E.renderer.dispose(); E.scene.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m.map) m.map.dispose(); m.dispose(); }); } });
+  E=null; $('#eva').classList.add('hidden'); $('#evaOv').classList.add('hidden'); document.body.style.overflow='';
+  if(wasMission&&G){ if(checkFail()) return render(); }
+  render(); mpSync();
+}
 
 /* ============ surface scene animation ============ */
 (function(){
