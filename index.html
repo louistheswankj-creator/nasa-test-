@@ -258,7 +258,7 @@ const ACTIONS = [
     fact:'Regolith is loose rock and dust. NASA is testing ways to 3D-print buildings and landing pads from it.'},
   {id:'ice',icon:'⛏️',name:'Mine Ice',desc:'Melt local ice for water (ISRU).',
     cost:{power:10}, gain:{water:28}, sci:1, risk:1, geo:1,
-    fact:'In-Situ Resource Utilization (ISRU) means "living off the land". Every kilogram of water made locally is one you don\'t launch from Earth — and launching costs thousands of dollars per kilogram.'},
+    fact:'In-Situ Resource Utilization (ISRU) means "living off the land". Every kilogram of water made locally is one you don\'t launch from Earth — every kilogram saved makes the rocket smaller and safer.'},
   {id:'oxy',icon:'🧪',name:'Electrolysis',desc:'Split 10 water into oxygen.',
     cost:{power:8,water:10}, gain:{oxygen:30}, sci:1,
     fact:'The ISS makes its oxygen by electrolysis of water. On Mars, the MOXIE experiment made oxygen directly from the CO₂ atmosphere.'},
@@ -303,7 +303,7 @@ const EVENTS = {
      fact:'Out of Earth\'s magnetic field you face solar particles and galactic cosmic rays. Radiation is the biggest unsolved problem of deep-space travel.'},
     {title:'🔧 Water Pump Failure',text:'A pump in the water-recycling loop is leaking.',
      choices:[
-       {t:'Repair it now (−power)',e:{power:-10},res:'Fixed with a spare gasket.'},
+       {t:'Repair it now',e:{power:-10},res:'Fixed with a spare gasket.'},
        {t:'Ignore it and ration water',e:{water:-22,morale:-4},res:'You lose water before the leak is patched.'}],
      fact:'On the ISS, astronauts act as plumbers, electricians and doctors. Cross-training matters when help is months away.'},
     {title:'🔊 Strange Noise',text:'A rhythmic thumping is coming from the air handling unit.',
@@ -316,7 +316,7 @@ const EVENTS = {
      fact:'Many scientists and engineers say Apollo inspired their careers. Space exploration inspires the next generation.'},
     {title:'💎 Lucky Find',text:'Your rover spots a layered rock outcrop nearby.',
      choices:[
-       {t:'Study it carefully (−power)',e:{power:-6},sci:18,res:'The layers reveal ancient geological history!'},
+       {t:'Study it carefully',e:{power:-6},sci:18,res:'The layers reveal ancient geological history!'},
        {t:'Quick photo and move on',e:{},sci:6,res:'A decent photo for the scientists back home.'}],
      fact:'Layered rocks are history books. Geologists read them to understand how planets form and change.'},
     {title:'😤 Crew Tension',text:'Months of confinement are fraying nerves. Small arguments are growing.',
@@ -440,7 +440,7 @@ const LESSONS = [
       {q:'Which radiation source can astronauts shelter from within hours?',a:'Solar flares',w:['Cosmic rays','Moonlight','Radio waves']}],
    sum:'Radiation is shielded best by hydrogen-rich materials such as water and plastic; solar flares can be sheltered from, cosmic rays only reduced.'},
   {id:'isru',icon:'⛏️',title:'Living off the land (ISRU)',
-   body:['Launching 1 kg to the Moon costs on the order of hundreds of thousands of dollars. So missions try to <b>use what is already there</b>.','Examples: melt ice for water, split water into oxygen and hydrogen fuel, extract oxygen from rock, make oxygen from Mars\' CO₂ air (MOXIE), 3D-print bricks from regolith.','Every step you do locally means a smaller, cheaper, safer rocket.'],
+   body:['Every kilogram sent to the Moon needs many more kilograms of fuel to lift it. So missions try to <b>use what is already there</b>.','Examples: melt ice for water, split water into oxygen and hydrogen fuel, extract oxygen from rock, make oxygen from Mars\' CO₂ air (MOXIE), 3D-print bricks from regolith.','Every step you do locally means a smaller, lighter, safer rocket.'],
    q:[{q:'What does ISRU let missions avoid?',a:'Launching everything from Earth',w:['Using electricity','Landing safely','Talking to Earth']},
       {q:'What did MOXIE make on Mars?',a:'Oxygen from CO₂',w:['Water from rocks','Rocket wings','Food']}],
    sum:'ISRU means using local resources, like ice, regolith and CO₂, to cut the mass launched from Earth.'},
@@ -471,6 +471,67 @@ const LESSONS = [
    sum:'Space exploration gives us satellites, spin-off technology, climate insight, planetary defense and inspiration.'}
 ];
 
+
+
+LESSONS.push(
+  {id:'suit',icon:'🧑‍🚀',title:'Spacesuits & spacewalks',
+   body:['A spacesuit is a <b>personal spacecraft</b>: it holds air pressure, supplies oxygen, removes CO₂, controls temperature and shields against dust and tiny meteoroids.','In sunlight, space can heat metal above 120 °C; in shadow it plunges below −150 °C. Suits use layers, reflective coatings and liquid-cooled undergarments to stay comfortable.','Suits are pressurized below Earth\'s air pressure, so astronauts <b>pre-breathe pure oxygen</b> for hours before a spacewalk to avoid decompression sickness ("the bends").'],
+   q:[{q:'Why do astronauts pre-breathe oxygen before a spacewalk?',a:'To avoid decompression sickness',w:['To warm up','To train their lungs for fun','To fill the suit with scent']},
+      {q:'Which is NOT something a spacesuit provides?',a:'Gravity',w:['Oxygen','Temperature control','Pressure']}],
+   sum:'Spacesuits are personal spacecraft that provide pressure, oxygen, cooling and protection; astronauts pre-breathe oxygen to avoid decompression sickness.'},
+  {id:'comms',icon:'📡',title:'Communication & navigation',
+   body:['Radio waves travel at the speed of light, about 300,000 km every second. That is instant on Earth, but the Moon is <b>1.3 light-seconds</b> away, Mars is <b>3 to 22 light-minutes</b> away and Jupiter 35 to 52 light-minutes.','NASA\'s <b>Deep Space Network</b> has giant dishes in California, Spain and Australia so that at least one can always see a spacecraft as Earth rotates.','Spacecraft navigate by tracking radio signals, star positions and sometimes pulsars. Far from home, they must be able to <b>make decisions on their own</b>.'],
+   q:[{q:'How long does a Moon–Earth radio signal take?',a:'About 1.3 seconds',w:['Instantly','About 1 hour','About 1 day']},
+      {q:'Why does the Deep Space Network have dishes on three continents?',a:'So one can always see the spacecraft as Earth rotates',w:['Because dishes are cheap','For tourism','To cool the electronics']}],
+   sum:'Radio signals take 1.3 seconds to the Moon and minutes to Mars; the Deep Space Network spans three continents so spacecraft are always in view.'},
+  {id:'worlds',icon:'🪐',title:'A tour of three worlds',
+   body:['<b>The Moon</b>: airless and cratered, one Earth-day-and-night lasts nearly a month. Its south pole has ice in permanent shadow and peaks of near-constant sunlight.','<b>Mars</b>: a cold desert with a thin CO₂ atmosphere, giant volcanoes, canyons and signs of ancient rivers and lakes. Dust storms can cover the planet.','<b>Europa</b>: a moon of Jupiter, wrapped in an ice shell over a global salty ocean, bathed in deadly radiation. It is one of the best places to look for life beyond Earth.'],
+   q:[{q:'Which world likely has a global liquid-water ocean under ice?',a:'Europa',w:['The Moon','Mars','Mercury']},
+      {q:'Which world has dust storms that can cover the whole planet?',a:'Mars',w:['The Moon','Europa','Jupiter']}],
+   sum:'The Moon is airless with polar ice, Mars is a cold desert with ancient riverbeds, and Europa hides a salty ocean beneath its ice.'},
+  {id:'seasons',icon:'🌗',title:'Days, nights & seasons',
+   body:['A <b>day</b> is how long a world takes to spin once. Earth: 24 h. Mars: 24 h 40 min (a <b>sol</b>). The Moon: about 29.5 Earth days between sunrises.','Seasons come from a tilted axis. Mars is tilted like Earth (25°), so it has seasons, but each lasts about twice as long because its year is 687 Earth days.','Europa is tidally locked to Jupiter and orbits it in 3.5 days, so Jupiter hangs fixed in its sky.'],
+   q:[{q:'What is a Martian day called?',a:'A sol',w:['A moon','A year','A pulse']},
+      {q:'Why does Mars have seasons?',a:'Its axis is tilted',w:['It is close to the Sun','It has two suns','It spins backwards']}],
+   sum:'A sol is a Martian day (24 h 40 min); Mars has seasons because its axis is tilted, but its year lasts 687 Earth days.'},
+  {id:'spin',icon:'💡',title:'Space inventions in your home',
+   body:['<b>Camera phones</b>: CMOS image sensors were invented at NASA\'s JPL. <b>Memory foam</b> was developed to cushion pilots. <b>Water filters</b> use technology from spacecraft water purification.','<b>Medical advances</b> include better imaging, insulin pumps and tiny heart devices. Lightweight materials and aerodynamics from aerospace make cars, bikes and planes safer and more efficient.','Studying Earth from orbit also helps farmers, fishermen and city planners, and tracks wildfires, ice sheets and hurricanes.'],
+   q:[{q:'Which everyday item came from space tech?',a:'Camera phone sensors',w:['Wheels','Candles','Chairs']},
+      {q:'How do satellites help people on Earth?',a:'Weather forecasts and navigation',w:['Cooking dinner','Making rain','Moving mountains']}],
+   sum:'Camera sensors, memory foam, water filters and medical devices are everyday spin-offs, and satellites support forecasts and navigation.'},
+  {id:'careers',icon:'👩‍🔬',title:'Careers in space',
+   body:['Space needs far more than astronauts: <b>engineers</b> build rockets and habitats, <b>geologists</b> read rocks, <b>doctors</b> keep crews healthy, <b>biologists</b> grow food, <b>programmers</b> write flight software and <b>teachers</b> inspire the next generation.','Mission control uses teams of hundreds, working in shifts around the clock. For Mars rovers, scientists even live on "Mars time" for weeks.','Many astronauts first trained as pilots, doctors, scientists or engineers, and all of them train for years in teamwork, medicine, robotics and survival.'],
+   q:[{q:'Who keeps a space crew healthy?',a:'Flight surgeons and doctors',w:['Only pilots','Nobody','Robots only']},
+      {q:'What do scientists on Mars rover teams sometimes do?',a:'Live on Mars time',w:['Sleep for a week','Wear space suits all day','Never go home']}],
+   sum:'Space needs engineers, geologists, doctors, biologists, programmers and teachers; rover teams even live on Mars time.'}
+);
+
+
+const GLOSSARY = [
+  ['Regolith','Loose dust and broken rock covering a planet or moon.'],
+  ['ISRU','In-Situ Resource Utilization: using local materials (ice, rock, air) instead of bringing them from Earth.'],
+  ['Electrolysis','Using electricity to split water into hydrogen and oxygen.'],
+  ['Microgravity','The feeling of weightlessness in orbit; objects and people are in continuous free-fall.'],
+  ['Magnetosphere','A planet\'s magnetic bubble that deflects charged particles from the Sun and deep space.'],
+  ['Perchlorate','A toxic salt found in Martian soil.'],
+  ['Sol','One Martian day: about 24 hours 40 minutes.'],
+  ['Delta-v','The total change in speed a spacecraft needs for a mission.'],
+  ['Light-minute','The distance light travels in one minute: about 18 million km.'],
+  ['Biosignature','Any sign, like a chemical or fossil, that could indicate past or present life.'],
+  ['EVA','Extravehicular Activity: a spacewalk or surface excursion.'],
+  ['Tidal heating','Warming of a moon\'s interior as its planet\'s gravity flexes it.'],
+  ['Free-fall','Falling around a planet; what an orbit really is.'],
+  ['Spin-off','A technology developed for space that is later used for everyday life.']
+];
+const WORLDS = [
+  ['','Earth','Moon','Mars','Europa'],
+  ['Gravity','1.00 g','0.17 g','0.38 g','0.13 g'],
+  ['Day length','24 h','29.5 days','24 h 40 m','3.5 days'],
+  ['Avg. temperature','15 °C','−20 °C (−170 to +120)','−60 °C','−160 °C'],
+  ['Atmosphere','78% N₂, 21% O₂','None','Thin, 95% CO₂','Almost none'],
+  ['Distance (light time)','—','1.3 seconds','3–22 minutes','35–52 minutes'],
+  ['Biggest danger','—','Dust, temperature swings','Dust, cold, radiation','Intense radiation']
+];
 
 const MISSIONS = [
   {icon:'🌕',name:'Artemis (NASA)',txt:'Returning humans to the Moon and building a sustained presence at the south pole.'},
@@ -551,6 +612,7 @@ function render(){
   if(scr==='land') return renderLand();
   if(scr==='surface') return renderSurface();
   if(scr==='end') return renderEnd();
+  if(scr==='exam') return renderExam();
 }
 
 /* ---------- menu ---------- */
@@ -782,7 +844,10 @@ function tabLearn(){
     return `<div class="card" style="border-color:var(--accent)"><h2>${L.icon} Quiz ${G.lStep}/${L.q.length}</h2><p>${q.q}</p>
       <div class="choices">${q.opts.map((o,i)=>`<button onclick="answerLesson(${i})">${o.t}</button>`).join('')}</div></div>`;
   }
-  return `<div class="card"><h2>🎓 Mission Academy</h2>
+  const table=`<div class="card"><h2>🪐 Compare the worlds</h2><div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:.9rem">
+    ${WORLDS.map((r,i)=>`<tr>${r.map((c,j)=>`<${i===0||j===0?'th':'td'} style="border:1px solid var(--line);padding:6px 8px;text-align:left;${i===0?'color:var(--accent)':''}">${c}</${i===0||j===0?'th':'td'}>`).join('')}</tr>`).join('')}
+    </table></div></div>`;
+  return table+`<div class="card"><h2>🎓 Mission Academy</h2>
   <p class="sub">Study real space science between tasks. Each lesson takes up one action of your day and rewards science and morale. ${G.lessons.size}/${LESSONS.length} complete.</p>
   <div class="actions">${LESSONS.map(l=>{ const done=G.lessons.has(l.id);
     return `<button onclick="startLesson('${l.id}')" ${(done&&false)||(!done&&G.ap<1)?'disabled':''}><b>${l.icon} ${l.title} ${done?'✅':''}</b>
@@ -867,7 +932,8 @@ function tabCodex(){
   const items=[...G.codex.entries()];
   return `<div class="card"><h2>📖 Mission Codex</h2>
   <p class="sub">Real space facts you've learned (${items.length}).</p>
-  ${items.length?items.reverse().map(([f,d])=>`<div class="fact"><b>Day ${d}:</b> ${f}</div>`).join(''):'<p class="sub">Nothing yet — take actions, explore and handle events to learn!</p>'}</div>`;
+  ${items.length?items.reverse().map(([f,d])=>`<div class="fact"><b>Day ${d}:</b> ${f}</div>`).join(''):'<p class="sub">Nothing yet — take actions, explore and handle events to learn!</p>'}</div>
+  <div class="card"><h2>📚 Glossary</h2>${GLOSSARY.map(([t,d])=>`<p style="margin:6px 0"><b style="color:var(--accent)">${t}</b> — ${d}</p>`).join('')}</div>`;
 }
 
 /* science spending: separate wallet so discoveries (total) stay intact */
@@ -1050,8 +1116,33 @@ function renderEnd(){
     </ul>
     <p class="sub" style="margin-top:10px">You learned <b>${G.codex.size}</b> real space facts this mission.</p>
   </div>
-  <div class="row"><button class="primary" style="flex:1;padding:14px" onclick="G=null;scr='menu';render()">🚀 NEW MISSION</button></div>`;
+  <div class="row"><button class="primary" style="flex:1;padding:14px" onclick="startExam()">📝 Take the Astronaut Exam</button><button class="primary" style="flex:1;padding:14px" onclick="G=null;scr='menu';render()">🚀 NEW MISSION</button></div>`;
 }
+
+
+/* ---------- final exam ---------- */
+let X=null;
+function startExam(){
+  const qs=shuffle(QUIZ).slice(0,8).map(q=>({q:q.q,why:q.why,opts:shuffle([{t:q.a,correct:true},...q.w.map(t=>({t,correct:false}))])}));
+  X={qs,i:0,right:0,fb:null}; scr='exam'; render();
+}
+function renderExam(){
+  if(X.i>=X.qs.length){
+    const pct=X.right/X.qs.length, grade=pct>=.9?'Flight Director 🥇':pct>=.65?'Mission Specialist 🥈':pct>=.4?'Trainee 🥉':'Cadet — keep learning!';
+    app.innerHTML=`<div class="card center"><p class="big">${pct>=.65?'🎓':'📘'}</p><h2 style="font-size:1.4rem">EXAM RESULT</h2>
+      <p>You scored <b>${X.right} / ${X.qs.length}</b></p><p><span class="tag">Certificate: ${grade}</span></p>
+      <p class="sub">${pct>=.65?'Great work! Share what you learned with someone today.':'Replay missions and visit the Academy to learn more, then try again.'}</p>
+      <div class="row" style="justify-content:center"><button class="primary" onclick="startExam()">🔁 Retake exam</button>
+      <button class="primary" onclick="G=null;scr='menu';render()">🚀 New mission</button></div></div>`; return;
+  }
+  const q=X.qs[X.i];
+  app.innerHTML=`<div class="card"><h2>📝 Astronaut Exam — ${X.i+1}/${X.qs.length}</h2><div class="prog"><div style="width:${X.i/X.qs.length*100}%"></div></div>
+    <p style="font-size:1.1rem">${q.q}</p>
+    ${X.fb?`<div class="fact" style="border-color:${X.fb.ok?'var(--good)':'var(--bad)'}"><b>${X.fb.ok?'✅ Correct!':'❌ Not quite.'}</b> ${q.why}</div>
+      <button class="primary" onclick="X.i++;X.fb=null;render()">Next ▶</button>`
+    :`<div class="choices">${q.opts.map((o,k)=>`<button onclick="examAnswer(${k})">${o.t}</button>`).join('')}</div>`}</div>`;
+}
+function examAnswer(k){ const q=X.qs[X.i], ok=q.opts[k].correct; if(ok) X.right++; X.fb={ok}; beep(ok?900:200,.2,ok?'triangle':'sawtooth'); render(); }
 
 /* ============ surface scene animation ============ */
 (function(){
