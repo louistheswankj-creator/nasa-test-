@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mission Survive – Astronaut Simulator</title>
+<style>
+  :root{
+    --bg:#070b1a; --panel:#111936; --panel2:#18224a; --text:#e8ecff; --muted:#9aa6d6;
+    --accent:#4cc9f0; --good:#4ade80; --warn:#fbbf24; --bad:#f87171; --line:#26336b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);
+    background:radial-gradient(ellipse at top,#16224f 0,#070b1a 60%) fixed;min-height:100vh}
+  #stars{position:fixed;inset:0;z-index:-1;width:100%;height:100%}
+  main{max-width:960px;margin:0 auto;padding:16px}
+  h1{margin:8px 0 4px;font-size:2rem;letter-spacing:.5px}
+  h2{margin:0 0 8px}
+  .sub{color:var(--muted);margin:0 0 16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+    padding:10px 14px;cursor:pointer;text-align:left;transition:.15s}
+  button:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.primary{background:var(--accent);color:#04101c;font-weight:700;text-align:center}
+  .dest{display:flex;flex-direction:column;gap:6px}
+  .dest .emoji{font-size:2.4rem}
+  .dest ul{margin:4px 0;padding-left:18px;color:var(--muted);font-size:.9rem}
+  .tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:99px;background:#0b1230;border:1px solid var(--line);color:var(--muted)}
+  .bars{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .bar{background:#0b1230;border-radius:8px;padding:6px 8px;border:1px solid var(--line)}
+  .bar .lbl{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)}
+  .bar .track{height:8px;background:#1b2652;border-radius:6px;margin-top:4px;overflow:hidden}
+  .bar .fill{height:100%;transition:width .4s,background .4s}
+  .top{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .actions{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .actions button b{display:block}
+  .actions button small{color:var(--muted)}
+  .log{max-height:160px;overflow:auto;font-size:.88rem;color:var(--muted);border-top:1px dashed var(--line);margin-top:10px;padding-top:8px}
+  .log p{margin:3px 0}
+  .fact{border-left:4px solid var(--accent);background:#0d1636;padding:10px 12px;border-radius:0 10px 10px 0;margin:10px 0;font-size:.92rem}
+  .fact b{color:var(--accent)}
+  .choices{display:grid;gap:8px;margin-top:10px}
+  .big{font-size:3rem;margin:0}
+  .center{text-align:center}
+  .tech{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
+  .tech.locked{opacity:.35}
+  .tech .e{font-size:1.5rem}
+  .hidden{display:none}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .ap{font-weight:700;color:var(--accent)}
+  @media(max-width:520px){h1{font-size:1.5rem}}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<main>
+  <h1>🚀 Mission Survive</h1>
+  <p class="sub">Command a crewed mission, keep your astronaut alive, and discover why exploring space matters back home.</p>
+  <div id="app"></div>
+</main>
+
+<script>
+"use strict";
+/* ---------- starfield background ---------- */
+(function(){
+  const c=document.getElementById('stars'),x=c.getContext('2d');
+  let stars=[];
+  function size(){c.width=innerWidth;c.height=innerHeight;
+    stars=Array.from({length:140},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.4+.2,s:Math.random()*.25+.05,p:Math.random()*6}));}
+  function draw(t){
+    x.clearRect(0,0,c.width,c.height);
+    for(const s of stars){
+      s.y+=s.s; if(s.y>c.height){s.y=0;s.x=Math.random()*c.width}
+      x.globalAlpha=.5+.5*Math.sin(t/700+s.p);
+      x.fillStyle='#fff';x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  addEventListener('resize',size);size();requestAnimationFrame(draw);
+})();
+
+/* ---------- game data ---------- */
+const STATS = {
+  oxygen:{label:'Oxygen',icon:'🫁'}, water:{label:'Water',icon:'💧'}, food:{label:'Food',icon:'🥫'},
+  power:{label:'Power',icon:'⚡'}, health:{label:'Health',icon:'❤️'}, morale:{label:'Morale',icon:'🙂'}
+};
+
+const DESTINATIONS = {
+  moon:{
+    name:'The Moon', emoji:'🌕', days:12, difficulty:'Beginner',
+    facts:['Gravity: 1/6 of Earth','No atmosphere','Surface: −170 °C to 120 °C','2 days away by rocket'],
+    drain:{oxygen:6,water:4,food:4,power:4,morale:1}, solar:26, exploreRisk:.15,
+    iceLine:'Water ice hides in permanently shadowed craters near the lunar south pole.',
+    intro:'You land near the lunar south pole, where Artemis-style missions plan to build a base. There is no air, no weather — just sharp dust, deep shadows and the Earth hanging in the sky.',
+    science:'Moon rocks record 4.5 billion years of solar-system history.'
+  },
+  mars:{
+    name:'Mars', emoji:'🔴', days:16, difficulty:'Hard',
+    facts:['Gravity: 38% of Earth','Air: 95% CO₂, 1% as thick as ours','Avg −60 °C, huge dust storms','6–9 months of travel'],
+    drain:{oxygen:6,water:5,food:5,power:5,morale:2}, solar:20, exploreRisk:.2,
+    iceLine:'Ice sits just under the surface at mid and high latitudes of Mars.',
+    intro:'After a seven-month journey you touch down in a rust-colored plain. A signal to Earth takes up to 22 minutes each way, so you must make decisions on your own.',
+    science:'Ancient river deltas on Mars suggest it once had liquid water — and maybe life.'
+  },
+  europa:{
+    name:'Europa (moon of Jupiter)', emoji:'🧊', days:14, difficulty:'Expert',
+    facts:['Gravity: 13% of Earth','Ice shell over a salty ocean','Surface ≈ −160 °C','Radiation would kill you in hours'],
+    drain:{oxygen:6,water:4,food:5,power:6,morale:2}, solar:9, exploreRisk:.28,
+    iceLine:'The entire surface is water ice — plenty of it, but sunlight is 25× weaker than at Earth.',
+    intro:'A sci-fi-flavored scenario: a robotic-assisted outpost on Jupiter\'s icy moon. Sunlight is faint and Jupiter\'s radiation belts are brutal, so power and shielding come first.',
+    science:'Europa has about twice as much water as all of Earth\'s oceans, making it a top place to search for life.'
+  }
+};
+
+/* Daily actions (2 per day) */
+const ACTIONS = [
+  {id:'science',icon:'🔬',name:'Field Science',desc:'Collect samples & run experiments.',
+    cost:{power:8,oxygen:4,water:2}, gain:{morale:4}, sci:12, risk:true},
+  {id:'ice',icon:'⛏️',name:'Mine Ice',desc:'Drill and melt ice for water (ISRU).',
+    cost:{power:10}, gain:{water:28}, sci:2, risk:true,
+    fact:'In-Situ Resource Utilization (ISRU) means "living off the land". Every kilogram of water you make locally is a kilogram you don\'t have to launch from Earth — launching costs roughly $1M+ per 100 kg.'},
+  {id:'oxy',icon:'🧪',name:'Run Electrolysis',desc:'Split 10 water into breathable oxygen.',
+    cost:{power:8,water:10}, gain:{oxygen:30}, sci:1,
+    fact:'The ISS already recycles ~90% of its water and makes its oxygen by electrolysis. Mars\' MOXIE experiment made oxygen straight from the CO₂ atmosphere.'},
+  {id:'farm',icon:'🌱',name:'Tend Greenhouse',desc:'Grow fresh food (and morale!).',
+    cost:{power:6,water:6}, gain:{food:24,morale:4}, sci:3,
+    fact:'Astronauts on the ISS have grown and eaten lettuce, radishes and chili peppers. Plants also recycle CO₂ back into oxygen.'},
+  {id:'power',icon:'☀️',name:'Service Power Grid',desc:'Clean panels & recharge batteries.',
+    cost:{}, gain:{}, sci:1, special:'power'},
+  {id:'exercise',icon:'🏃',name:'Exercise',desc:'2 hours on the treadmill & resistance rig.',
+    cost:{power:3,water:2}, gain:{health:12}, sci:0,
+    fact:'In low gravity, astronauts can lose 1–2% of bone mass per month. Two hours of daily exercise is a mandatory part of life on the ISS.'},
+  {id:'rest',icon:'😴',name:'Rest & Call Home',desc:'Sleep, eat well, video call family.',
+    cost:{}, gain:{health:6,morale:14}, sci:0,
+    fact:'Isolation is a real hazard. Space agencies study crews in Antarctica and sealed-habitat experiments like HI-SEAS and SIRIUS to learn how to keep teams healthy.'}
+];
+
+/* Random events */
+const EVENTS = {
+  all:[
+    {title:'Sudden Solar Flare ☀️💥',
+     text:'Mission control warns of a solar particle event arriving in 30 minutes. Radiation levels outside are climbing.',
+     choices:[
+       {t:'Shelter in the shielded storm cell',e:{morale:-5,power:-4},res:'You wait it out in the water-lined safe room. Water is a great radiation shield!'},
+       {t:'Finish your outdoor task first',e:{health:-28},sci:10,res:'You got the data, but absorbed a hefty dose of radiation.'}],
+     fact:'Space radiation is one of the biggest challenges for deep-space travel. Out of Earth\'s magnetic field you face solar particles and galactic cosmic rays.'},
+    {title:'Water Pump Failure 🔧',
+     text:'A pump in the water-recycling loop is leaking. Can you fix it?',
+     choices:[
+       {t:'Spend time repairing it (-power)',e:{power:-10},res:'Fixed with a spare gasket. Crisis averted.'},
+       {t:'Ignore it and ration water',e:{water:-22,morale:-4},res:'You lose a fair bit of water before the leak is patched.'}],
+     fact:'On the ISS, astronauts act as plumbers, electricians and doctors. Cross-training is crucial when help is months away.'},
+    {title:'Strange Noise in the Habitat 🔊',
+     text:'A rhythmic thumping is coming from the air handling unit.',
+     choices:[
+       {t:'Inspect and clean the fan',e:{power:-4},sci:3,res:'A clogged filter. Cleaned and humming again.'},
+       {t:'Turn up the music and ignore it',e:{oxygen:-15},res:'The fan was failing — you lost some air circulation.'}],
+     fact:'Without convection in microgravity, hot stale air doesn\'t rise — so fans keep CO₂ from pooling around astronauts\' faces.'},
+    {title:'Message From Earth 📡',
+     text:'Mission control sends a package of encouragement from schoolchildren around the world.',
+     choices:[{t:'Read them aloud to the team 🥹',e:{morale:18},res:'Morale soars.'}],
+     fact:'Space exploration inspires people across the planet. Many scientists and engineers cite the Apollo missions as why they chose their careers.'},
+    {title:'Lucky Find 💎',
+     text:'Your rover spots an unusual, layered rock outcrop nearby.',
+     choices:[
+       {t:'Study it carefully (-power)',e:{power:-6},sci:18,res:'The layers reveal ancient geological history!'},
+       {t:'Take a quick photo and move on',e:{},sci:6,res:'A decent photo for the scientists back home.'}],
+     fact:'Layered rocks are like history books. Geologists read them to understand how planets form and change.'}
+  ],
+  moon:[
+    {title:'Lunar Dust Attack 🌫️',
+     text:'Regolith dust is clinging to your suit and may clog the airlock seals. Lunar dust is razor-sharp and statically charged.',
+     choices:[
+       {t:'Thorough cleaning routine',e:{power:-5,water:-3},res:'Seals stay clean. Slow but safe.'},
+       {t:'Quick brush-off',e:{health:-12,oxygen:-10},res:'Fine dust seeps inside. Coughing and a small air leak.'}],
+     fact:'Apollo astronauts reported "lunar hay fever" and worn-out suit fabric from dust. It\'s one of the main engineering challenges for modern lunar missions.'},
+    {title:'Micrometeorite Strike 💫',
+     text:'With no atmosphere to burn them up, tiny space rocks hit the surface at tens of thousands of km/h. One hits a solar panel.',
+     choices:[{t:'Go out and patch the panel',e:{power:-12,oxygen:-4},res:'Panel patched.'},
+              {t:'Run on reduced power',e:{power:-20},res:'You lose a lot of generation capacity.'}],
+     fact:'Earth\'s atmosphere shields us from most space debris. On the Moon, habitats will need thick walls or can be buried under regolith.'},
+    {title:'Two-Week Night Begins 🌑',
+     text:'The Sun sets and will stay down for ~14 Earth days at your latitude on parts of the Moon. Solar power drops.',
+     choices:[{t:'Switch to battery saver mode',e:{power:-14,morale:-4},res:'You conserve energy, but the habitat is cold and dim.'}],
+     fact:'A lunar "day" lasts about 29.5 Earth days. Missions near the poles pick sites with near-constant sunlight on high "peaks of eternal light".'}
+  ],
+  mars:[
+    {title:'Global Dust Storm 🌪️',
+     text:'A planet-encircling dust storm darkens the sky. Solar panels barely work.',
+     choices:[{t:'Hunker down and wait it out',e:{power:-22,morale:-8},res:'It blows for days. You survive on batteries.'},
+              {t:'Run the backup nuclear generator',e:{power:-5,health:-4},res:'Kilopower-style fission provides steady energy. A nervous few days, but it works.'}],
+     fact:'In 2018, a dust storm ended NASA\'s solar-powered Opportunity rover after 15 years. Nuclear power is likely essential for long Martian stays.'},
+    {title:'Toxic Soil ☠️',
+     text:'Lab tests show Martian soil contains perchlorates — toxic salts — that could poison your greenhouse crops.',
+     choices:[{t:'Wash the soil with water first',e:{water:-12,power:-3},sci:6,res:'The washed soil is safe for planting.'},
+              {t:'Plant anyway',e:{food:-18,health:-8},res:'The crops fail and you feel sick.'}],
+     fact:'Perchlorates were first found by NASA\'s Phoenix lander in 2008. Bacteria and washing can remove them — a good problem for chemists!'},
+    {title:'Comms Delay ⏳',
+     text:'Mission control is 20 light-minutes away. You face a tricky decision and can\'t wait for an answer.',
+     choices:[{t:'Trust the crew\'s training',e:{morale:6},sci:5,res:'Autonomy pays off. You solve it yourself.'},
+              {t:'Wait for instructions',e:{power:-8,food:-8},res:'Hours of delay burn resources.'}],
+     fact:'Unlike Apollo, Mars crews can\'t get real-time help, so they need self-reliant AI tools and extensive training.'},
+    {title:'MOXIE Opportunity 🌬️',
+     text:'Your oxygen-from-CO₂ experiment is working better than expected.',
+     choices:[{t:'Scale it up',e:{power:-8,oxygen:+25},res:'You turn the thin CO₂ atmosphere into breathable oxygen.'}],
+     fact:'NASA\'s MOXIE on the Perseverance rover made oxygen on Mars from CO₂ 16 times. A full-scale version could fuel both astronauts and rockets.'}
+  ],
+  europa:[
+    {title:'Jupiter Radiation Belt ☢️',
+     text:'Jupiter\'s magnetosphere flares. Radiation doses are spiking even inside the habitat.',
+     choices:[{t:'Retreat to the ice-shielded bunker',e:{morale:-8,power:-6},res:'Ice makes superb shielding.'},
+              {t:'Keep working',e:{health:-30},sci:12,res:'Great data, terrible dose.'}],
+     fact:'Europa gets ~5 Sv/day of radiation at the surface — a lethal dose for humans in about a day. That\'s why robots and shielding are vital.'},
+    {title:'Ice Quake 🧊',
+     text:'The ice shell flexes from Jupiter\'s tides, cracking the surface near your lander.',
+     choices:[{t:'Take samples from the fresh crack',e:{oxygen:-6,power:-4},sci:22,res:'You gather briny ice from the subsurface — it might contain biosignatures!'},
+              {t:'Move the habitat to safer ice',e:{power:-14},res:'A tiring relocation, but safe.'}],
+     fact:'Jupiter\'s gravity flexes Europa, heating its interior. Plumes of water vapor seem to erupt from cracks, giving us free samples from below.'},
+    {title:'Faint Sunlight 🌑',
+     text:'Sunlight at Jupiter is ~4% of that at Earth. Your solar arrays are underperforming.',
+     choices:[{t:'Deploy extra panels',e:{power:-10,oxygen:-3},res:'More panels, a bit more power.'},
+              {t:'Turn off non-essential systems',e:{morale:-10,power:-4},res:'Cold, dark, and glum.'}],
+     fact:'NASA\'s Juno probe at Jupiter uses huge solar panels, while Voyager and Cassini used radioisotope generators. Europa Clipper has big arrays too.'}
+  ]
+};
+
+/* Spin-off technologies unlocked by science score */
+const SPINOFFS = [
+  {at:10,icon:'🏥',name:'Better Medical Imaging',txt:'Digital image processing developed for Apollo-era lunar imagery now powers CT and MRI scans.'},
+  {at:25,icon:'💧',name:'Water Purification',txt:'Spacecraft water-recycling tech now provides clean drinking water in remote villages worldwide.'},
+  {at:40,icon:'📷',name:'Phone Camera Sensors',txt:'The CMOS image sensor was invented at NASA\'s JPL to make cameras smaller for spacecraft. It\'s in every smartphone.'},
+  {at:60,icon:'🛰️',name:'GPS & Satellites',txt:'Satellite navigation, weather forecasting and global communications all depend on space technology.'},
+  {at:80,icon:'🌍',name:'Climate Science',txt:'Studying other planets (like Venus\' greenhouse effect) helps us understand climate change on Earth.'},
+  {at:100,icon:'🧬',name:'Life Beyond Earth?',txt:'Finding life elsewhere would reshape biology and answer one of humanity\'s biggest questions.'},
+  {at:130,icon:'☄️',name:'Planetary Defense',txt:'Studying asteroids and comets lets us build defenses — in 2022 NASA\'s DART mission nudged an asteroid\'s orbit.'}
+];
+
+const GENERAL_FACTS = [
+  'Space exploration has produced over 2,000 spin-off technologies, from memory foam to scratch-resistant lenses.',
+  'The ISS has been continuously inhabited since November 2000.',
+  'Without a spacesuit in a vacuum, you\'d lose consciousness in roughly 10–15 seconds.',
+  'Exploring other worlds teaches us how fragile and special Earth is — the "Overview Effect" that astronauts often report.',
+  'Rockets need to reach ~28,000 km/h to stay in orbit around Earth.',
+  'Space missions are team efforts — thousands of engineers, scientists, doctors and teachers support each astronaut.'
+];
+
+/* ---------- game state ---------- */
+let G = null;
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const clamp = (v,a=0,b=100) => Math.max(a,Math.min(b,v));
+const pick = a => a[Math.floor(Math.random()*a.length)];
+
+function newGame(key){
+  const d = DESTINATIONS[key];
+  G = {key, d, day:1, ap:2, sci:0, over:false, event:null, awaitingEvent:false,
+    s:{oxygen:80,water:75,food:75,power:80,health:100,morale:80},
+    log:[`🛬 Day 1: ${d.intro}`], unlocked:new Set(), seen:new Set(), lastFact:null, solarMult:1};
+  render();
+}
+
+function applyDelta(delta){
+  for(const k in delta){ G.s[k] = clamp(G.s[k] + delta[k]); }
+}
+function log(msg){ G.log.unshift(msg); }
+
+/* ---------- rendering ---------- */
+function bar(k){
+  const v = Math.round(G.s[k]);
+  const col = v>50?'var(--good)':v>25?'var(--warn)':'var(--bad)';
+  return `<div class="bar"><div class="lbl"><span>${STATS[k].icon} ${STATS[k].label}</span><span>${v}</span></div>
+    <div class="track"><div class="fill" style="width:${v}%;background:${col}"></div></div></div>`;
+}
+
+function renderMenu(){
+  app.innerHTML = `
+  <div class="card">
+    <h2>Choose your destination</h2>
+    <p class="sub">Each world has different dangers. Survive until the end of the mission, gather science, and bring your discoveries home.</p>
+    <div class="grid">
+      ${Object.entries(DESTINATIONS).map(([k,d])=>`
+        <button class="dest" onclick="newGame('${k}')">
+          <span class="emoji">${d.emoji}</span>
+          <b style="font-size:1.15rem">${d.name}</b>
+          <span class="tag">${d.difficulty} · ${d.days} days</span>
+          <ul>${d.facts.map(f=>`<li>${f}</li>`).join('')}</ul>
+          <small style="color:var(--muted)">${d.iceLine}</small>
+        </button>`).join('')}
+    </div>
+  </div>
+  <div class="card">
+    <h2>How to play</h2>
+    <ul style="color:var(--muted);line-height:1.6;margin:0;padding-left:20px">
+      <li>Each day you have <b class="ap">2 action points</b>. Choose how to spend them.</li>
+      <li>Every day your crew uses oxygen, water, food and power — even more with hard work.</li>
+      <li>If oxygen, water, food or health hits <b>0</b>, the mission fails. If power hits 0, life support suffers.</li>
+      <li>Random events test your decisions. Learn the real science behind each one!</li>
+      <li>Science points unlock real technologies that space research gave to everyday life on Earth.</li>
+    </ul>
+  </div>`;
+}
+
+function renderGame(){
+  const d=G.d;
+  const crit = Object.keys(G.s).filter(k=>['oxygen','water','food','health'].includes(k) && G.s[k]<25);
+  app.innerHTML = `
+  <div class="card">
+    <div class="top">
+      <div><b>${d.emoji} ${d.name}</b> <span class="tag">Day ${G.day} / ${d.days}</span></div>
+      <div>🔬 Science: <b>${G.sci}</b> &nbsp; <span class="ap">Actions left today: ${G.ap}</span></div>
+    </div>
+    <div class="bars">${Object.keys(STATS).map(bar).join('')}</div>
+    ${crit.length?`<div class="fact" style="border-color:var(--bad)"><b style="color:var(--bad)">⚠ Warning:</b> ${crit.map(k=>STATS[k].label).join(', ')} critically low!</div>`:''}
+  </div>
+  ${G.event ? renderEvent() : renderActions()}
+  ${G.lastFact?`<div class="fact"><b>💡 Did you know?</b> ${G.lastFact}</div>`:''}
+  <div class="card">
+    <b>📓 Mission log</b>
+    <div class="log">${G.log.slice(0,25).map(l=>`<p>${l}</p>`).join('')}</div>
+  </div>`;
+}
+
+function renderActions(){
+  return `<div class="card">
+    <h2>What will you do?</h2>
+    <div class="actions">
+    ${ACTIONS.map(a=>{
+      const ok = Object.entries(a.cost).every(([k,v])=>G.s[k]>=v);
+      const cost = Object.entries(a.cost).map(([k,v])=>`−${v} ${STATS[k].icon}`).join(' ');
+      let gain = Object.entries(a.gain).map(([k,v])=>`+${v} ${STATS[k].icon}`).join(' ');
+      if(a.special==='power') gain = `+${Math.round(G.d.solar)} ⚡`;
+      if(a.sci>=5) gain += ` +${a.sci} 🔬`;
+      return `<button onclick="doAction('${a.id}')" ${ok&&G.ap>0?'':'disabled'}>
+        <b>${a.icon} ${a.name}</b><small>${a.desc}</small><br><small>${cost} ${cost&&gain?'→':''} ${gain}</small></button>`;
+    }).join('')}
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button class="primary" onclick="endDay()">🌙 End Day ${G.ap>0?'(skip remaining actions)':''}</button>
+    </div>
+  </div>`;
+}
+
+function renderEvent(){
+  const e=G.event;
+  return `<div class="card" style="border-color:var(--warn)">
+    <h2>⚠ ${e.title}</h2>
+    <p>${e.text}</p>
+    <div class="choices">${e.choices.map((c,i)=>`<button onclick="chooseEvent(${i})">${c.t}</button>`).join('')}</div>
+  </div>`;
+}
+
+function render(){
+  if(!G) return renderMenu();
+  if(G.over) return renderEnd();
+  renderGame();
+}
+
+/* ---------- game logic ---------- */
+function doAction(id){
+  const a = ACTIONS.find(x=>x.id===id);
+  if(!a || G.ap<=0) return;
+  if(!Object.entries(a.cost).every(([k,v])=>G.s[k]>=v)) return;
+  G.ap--;
+  for(const k in a.cost) G.s[k] = clamp(G.s[k]-a.cost[k]);
+  applyDelta(a.gain);
+  if(a.special==='power') applyDelta({power:G.d.solar});
+  G.sci += a.sci;
+  let msg = `${a.icon} ${a.name}.`;
+  if(a.sci>=5) msg += ` +${a.sci} science.`;
+  if(a.risk && Math.random()<G.d.exploreRisk){
+    const dmg = 6+Math.floor(Math.random()*10);
+    applyDelta({health:-dmg});
+    msg += ` 😬 Minor accident outside! −${dmg} health.`;
+  }
+  log(msg);
+  if(a.fact) G.lastFact = a.fact;
+  checkUnlocks();
+  if(checkFail()) return render();
+  render();
+}
+
+function endDay(){
+  const d=G.d;
+  // daily consumption, scaled up when stressed
+  const dr = d.drain;
+  for(const k in dr) G.s[k] = clamp(G.s[k]-dr[k]);
+  let note = `🌙 End of day ${G.day}: crew used supplies.`;
+  if(G.s.power<=0){
+    applyDelta({oxygen:-14,health:-6});
+    note += ' ⚠ Power outage: life support is failing!';
+  }
+  if(G.s.morale<20){ applyDelta({health:-4}); note += ' 😟 Low morale is hurting your health.'; }
+  if(G.s.oxygen<15||G.s.water<15||G.s.food<15){ applyDelta({health:-6}); note += ' Shortages are hurting your health.'; }
+  // natural recovery
+  applyDelta({health:2});
+  log(note);
+  if(checkFail()) return render();
+  if(G.day>=d.days){ G.over=true; G.win=true; return render(); }
+  G.day++; G.ap=2;
+  log(`☀️ Day ${G.day} begins.`);
+  if(Math.random()<.65){
+    const pool = EVENTS.all.concat(EVENTS[G.key]);
+    const fresh = pool.filter(e=>!G.seen.has(e.title));
+    G.event = pick(fresh.length?fresh:pool);
+    G.seen.add(G.event.title);
+  } else if(Math.random()<.4) G.lastFact = pick(GENERAL_FACTS);
+  render();
+}
+
+function chooseEvent(i){
+  const e=G.event, c=e.choices[i];
+  applyDelta(c.e||{});
+  if(c.sci){ G.sci+=c.sci; }
+  log(`⚠ ${e.title.replace(/ [^\w ]+$/u,'')}: ${c.res}`);
+  G.lastFact = e.fact;
+  G.event=null;
+  checkUnlocks();
+  if(checkFail()) return render();
+  render();
+}
+
+function checkUnlocks(){
+  for(const s of SPINOFFS){
+    if(G.sci>=s.at && !G.unlocked.has(s.name)){
+      G.unlocked.add(s.name);
+      log(`🎉 Discovery unlocked: ${s.icon} ${s.name}!`);
+    }
+  }
+}
+
+function checkFail(){
+  const reasons = {
+    oxygen:'You ran out of breathable oxygen. In space, air is life — production and recycling must always outpace use.',
+    water:'Dehydration ended the mission. Water is heavy to launch, so astronauts recycle it and mine local ice.',
+    food:'The crew starved. Long missions need food production (greenhouses) because resupply from Earth may be months away.',
+    health:'The crew became too ill to continue. Radiation, injuries and bone/muscle loss are serious hazards of space travel.'
+  };
+  for(const k in reasons){
+    if(G.s[k]<=0){ G.over=true; G.win=false; G.reason=reasons[k]; return true; }
+  }
+  return false;
+}
+
+function renderEnd(){
+  const d=G.d;
+  const stat = Object.values(G.s).reduce((a,b)=>a+b,0)/6;
+  const score = Math.round(G.sci*10 + stat*5 + (G.win?500:G.day*20));
+  const rank = !G.win ? 'Lost in Space' : G.sci>=100?'Mission Commander 🏆':G.sci>=60?'Senior Astronaut 🥇':G.sci>=30?'Astronaut 🥈':'Rookie 🥉';
+  app.innerHTML = `
+  <div class="card center">
+    <p class="big">${G.win?'🎉':'💥'}</p>
+    <h2>${G.win?'Mission Complete!':'Mission Failed'}</h2>
+    <p>${G.win?`You survived all ${d.days} days on ${d.name}.`:G.reason}</p>
+    <p><span class="tag">Rank: ${rank}</span> <span class="tag">Score: ${score}</span> <span class="tag">Science: ${G.sci}</span> <span class="tag">Days: ${G.win?d.days:G.day}</span></p>
+    <p class="sub">${d.science}</p>
+  </div>
+  <div class="card">
+    <h2>🌍 What space exploration gives us back</h2>
+    <p class="sub">Your science points unlocked these real-world benefits. Locked items need more research — keep exploring!</p>
+    ${SPINOFFS.map(s=>`<div class="tech ${G.unlocked.has(s.name)?'':'locked'}">
+      <div class="e">${G.unlocked.has(s.name)?s.icon:'🔒'}</div>
+      <div><b>${s.name}</b> <span class="tag">${s.at} 🔬</span><br><small style="color:var(--muted)">${s.txt}</small></div></div>`).join('')}
+  </div>
+  <div class="card">
+    <h2>Survival lessons</h2>
+    <ul style="color:var(--muted);line-height:1.6;padding-left:20px;margin:0">
+      <li><b>Closed loops:</b> recycle air and water; every kilogram launched is expensive.</li>
+      <li><b>Live off the land (ISRU):</b> mine ice, make oxygen, grow food.</li>
+      <li><b>Mind and body:</b> exercise, sleep and morale are survival gear too.</li>
+      <li><b>Prepare for the unexpected:</b> radiation, dust and failures need backups.</li>
+      <li><b>Teamwork:</b> thousands of people on Earth support each astronaut.</li>
+    </ul>
+  </div>
+  <div class="row"><button class="primary" onclick="G=null;render()">🚀 Play again</button></div>`;
+}
+
+render();
+</script>
+</body>
+</html>
