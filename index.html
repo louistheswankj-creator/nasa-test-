@@ -145,7 +145,7 @@
   <div id="evaBanner"></div>
   <div id="evaPrompt"></div>
   <div id="evaCard"></div>
-  <div id="evaHint">WASD move · Shift sprint · Space jump · <b>F</b> scan · <b>E</b> use/repair · <b>Q</b> radio hint · H end shift</div>
+  <div id="evaHint">Walk into the modules through the orange doorway rings · WASD move · Shift sprint · Space jump · <b>F</b> scan · <b>E</b> use/repair · <b>Q</b> radio hint · H end shift</div>
   <div id="joy"><div id="joyK"></div></div><div id="lookZ"></div><button id="jumpB">⤒</button>
   <div id="evaBtns"><button id="bScan">🔎 Scan</button><button id="bUse">🛠 Use</button><button id="bRadio">📻 Hint</button></div>
   <div id="evaOv" class="hidden"></div>
@@ -1500,16 +1500,63 @@ function startEVA(wk, mission){
   const disc=cast(new THREE.Mesh(new THREE.CylinderGeometry(5.2,5.5,.8,28),grey)); disc.position.y=.3; base.add(disc);
   const door=new THREE.Mesh(new THREE.BoxGeometry(2,2.7,.5),new THREE.MeshLambertMaterial({color:0x35e0ff,emissive:0x0a5566})); door.position.set(0,1.35,4.9); base.add(door);
   for(let i=0;i<5;i++){ const w=new THREE.Mesh(new THREE.BoxGeometry(.9,.5,.2),winMat); const a=-1.2+i*.6+3.14; w.position.set(Math.sin(a)*4.55,2.6,Math.cos(a)*4.55); w.rotation.y=a; base.add(w); }
-  const mkTube=(a,b,r)=>{ const v=new THREE.Vector3().subVectors(b,a), len=v.length(); const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,10),grey); m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize()); return cast(m); };
-  const modDefs=[{n:'A',x:-15,z:-3,ry:0},{n:'B',x:-6,z:-16,ry:Math.PI/2},{n:'C',x:13,z:-11,ry:.5}];
-  const modules=modDefs.map(md=>{ const g=new THREE.Group(); g.position.set(md.x,0,md.z); g.rotation.y=md.ry;
-    const body=cast(new THREE.Mesh(new THREE.CylinderGeometry(2.3,2.3,8,18),white)); body.rotation.z=Math.PI/2; body.position.y=2.5; g.add(body);
-    [-4,4].forEach(ex=>{ const cap=cast(new THREE.Mesh(new THREE.SphereGeometry(2.3,16,10),white)); cap.position.set(ex,2.5,0); g.add(cap); });
-    for(let i=0;i<4;i++){ const w=new THREE.Mesh(new THREE.BoxGeometry(.8,.5,.2),winMat); w.position.set(-2.4+i*1.6,3.3,2.25); g.add(w); }
-    const stripe=new THREE.Mesh(new THREE.CylinderGeometry(2.33,2.33,.5,18),new THREE.MeshLambertMaterial({color:0xff7a3d})); stripe.rotation.z=Math.PI/2; stripe.position.set(0,2.5,0); g.add(stripe);
-    base.add(g); const lb=label3d('MODULE '+md.n,'#35e0ff',5); lb.position.set(md.x,6.6,md.z); base.add(lb);
-    base.add(mkTube(new THREE.Vector3(0,1.2,0),new THREE.Vector3(md.x*.55,1.4,md.z*.55),.8));
-    return {id:'mod'+md.n,kind:'module',name:'Module '+md.n,pos:new THREE.Vector3(md.x,2.5,md.z),r:4.8,group:g,leak:false}; });
+  const lightMat=new THREE.MeshBasicMaterial({color:0xfff4d8});
+  const floorTex=(()=>{ const c=document.createElement('canvas'); c.width=c.height=64; const x=c.getContext('2d'); x.fillStyle='#3a4160'; x.fillRect(0,0,64,64); x.fillStyle='#2a3050'; for(let i=0;i<64;i+=8){ x.fillRect(i,0,3,64); x.fillRect(0,i,64,3); } const t=new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(5,2.2); return t; })();
+  const modLights=[];
+  function buildModule(md){
+    const L=Math.hypot(md.x,md.z), th=Math.atan2(md.z,-md.x);
+    const g=new THREE.Group(); g.position.set(md.x,0,md.z); g.rotation.y=th;
+    const rects=[{x0:-5.4,x1:5.3,z0:2.35,z1:3.8},{x0:-5.4,x1:5.3,z0:-3.8,z1:-2.35},{x0:-5.8,x1:-4.75,z0:-3.8,z1:3.8}];
+    const dbl=new THREE.MeshLambertMaterial({color:0xdde3ff,side:THREE.DoubleSide});
+    const shell=cast(new THREE.Mesh(new THREE.CylinderGeometry(3,3,10,28,1,true),dbl)); shell.rotation.z=Math.PI/2; shell.position.y=2; g.add(shell);
+    const band=new THREE.Mesh(new THREE.CylinderGeometry(3.03,3.03,.7,28,1,true),new THREE.MeshLambertMaterial({color:0xff7a3d,side:THREE.DoubleSide})); band.rotation.z=Math.PI/2; band.position.set(2.5,2,0); g.add(band);
+    const back=new THREE.Mesh(new THREE.CircleGeometry(3,28),new THREE.MeshLambertMaterial({color:0xb8c0e8,side:THREE.DoubleSide})); back.rotation.y=Math.PI/2; back.position.set(-5,2,0); g.add(back);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(3,.16,8,28),new THREE.MeshLambertMaterial({color:0xff7a3d})); ring.rotation.y=Math.PI/2; ring.position.set(5,2,0); g.add(ring);
+    const floor=new THREE.Mesh(new THREE.BoxGeometry(10,.06,4.5),new THREE.MeshLambertMaterial({map:floorTex})); floor.position.y=.04; floor.receiveShadow=true; g.add(floor);
+    const ramp=new THREE.Mesh(new THREE.BoxGeometry(2.4,.06,4.5),new THREE.MeshLambertMaterial({color:0x6a7090})); ramp.position.set(6.2,.03,0); g.add(ramp);
+    for(let i=0;i<3;i++){ const st=new THREE.Mesh(new THREE.BoxGeometry(1.6,.06,.4),lightMat); st.position.set(-3+i*3,4.82,0); g.add(st); }
+    const pl=new THREE.PointLight(0xfff0d0,1,20); pl.position.set(0,4.1,0); g.add(pl); modLights.push(pl);
+    [-1,1].forEach(sd=>{ for(let i=0;i<2;i++){ const w=new THREE.Mesh(new THREE.CircleGeometry(.5,16),winMat); w.position.set(-1.2+i*3.2,2.9,sd*2.86); w.rotation.y=sd>0?Math.PI:0; g.add(w); } });
+    const prop=(w,h,d,col,x,y,z,o)=>{ o=o||{}; const m=cast(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),o.emi?new THREE.MeshBasicMaterial({color:col}):new THREE.MeshLambertMaterial({color:col}))); m.position.set(x,y,z); g.add(m); if(!o.nc&&y-h/2<1.5) rects.push({x0:x-w/2,x1:x+w/2,z0:z-d/2,z1:z+d/2}); return m; };
+    const cyl=(r,h,col,x,y,z,o)=>{ o=o||{}; const m=cast(new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,14),new THREE.MeshLambertMaterial({color:col,emissive:o.em||0x000000}))); m.position.set(x,y,z); if(o.rz) m.rotation.z=Math.PI/2; g.add(m); if(!o.nc) rects.push({x0:x-r,x1:x+r,z0:z-r,z1:z+r}); return m; };
+    const title={lab:'LAB',life:'LIFE SUPPORT',crew:'CREW QUARTERS'}[md.k];
+    let rack=null;
+    if(md.k==='lab'){
+      prop(4,.9,1,0x6a7090,-.5,.45,-1.85); prop(3.8,.05,.9,0x9aa6d6,-.5,.92,-1.85);
+      prop(.9,.6,.06,0x35e0ff,-1.6,1.45,-2.2,{emi:1,nc:1}); cyl(.18,.5,0xdde3ff,.4,1.2,-1.8,{nc:1});
+      prop(2.2,2,1,0x9aa6d6,-2.9,1,1.8); prop(1.6,.05,.9,0x35e0ff,-2.9,2.05,1.8,{emi:1,nc:1});
+      prop(.9,1.2,.9,0x8e98c8,1.8,.6,1.8); cyl(.45,.7,0xb0b7d8,3.2,.35,1.8);
+      rack=new THREE.Group(); rack.position.set(2.6,1.5,-2.15); g.add(rack);
+      prop(2.4,.08,.55,0x6a7090,2.6,1.3,-2.15,{nc:1}); prop(2.4,.08,.55,0x6a7090,2.6,1.9,-2.15,{nc:1}); prop(.08,.7,.55,0x6a7090,1.45,1.6,-2.15,{nc:1}); prop(.08,.7,.55,0x6a7090,3.75,1.6,-2.15,{nc:1});
+    }
+    if(md.k==='life'){
+      cyl(.6,2.4,0x2b8de0,-3.3,1.2,-1.6,{em:0x0a2a55}); cyl(.6,2.4,0x2b8de0,-3.3,1.2,1.6,{em:0x0a2a55});
+      cyl(.45,2.0,0xe8edff,-1.9,1,-1.9); cyl(.45,2.0,0xe8edff,-1.9,1,1.9);
+      [-1.7,1.7].forEach(zz=>cyl(.1,9,0x9aa6d6,0,4.1,zz,{rz:1,nc:1}));
+      prop(2.6,1.1,.8,0x6a7090,1.8,.55,-2.0); prop(.9,.55,.06,0x3ddc97,1.2,1.5,-2.45,{emi:1,nc:1}); prop(.9,.55,.06,0x35e0ff,2.4,1.5,-2.45,{emi:1,nc:1});
+      prop(1.3,1.6,1,0x8e98c8,2.6,.8,1.9); cyl(.3,1,0xff7a3d,4,.5,-1.7);
+    }
+    if(md.k==='crew'){
+      prop(2.2,.3,1.1,0x4a5aa8,-3.2,.6,-1.9); prop(2.2,.3,1.1,0x4a5aa8,-3.2,1.7,-1.9,{nc:1}); prop(2.2,.15,1.1,0xe8edff,-3.2,.82,-1.9,{nc:1});
+      prop(2.2,.3,1.1,0xa84a6a,-.6,.6,-1.9); prop(2.2,.15,1.1,0xe8edff,-.6,.82,-1.9,{nc:1});
+      prop(1.8,.08,1.1,0x6a7090,2,.8,1.7); cyl(.12,.8,0x6a7090,2,.4,1.7,{nc:1});
+      prop(.5,.5,.5,0xb0b7d8,.9,.25,1.7); prop(.5,.5,.5,0xb0b7d8,3.1,.25,1.7);
+      cyl(.35,.4,0x8a4a2c,-3.6,.2,1.8); const leaf=new THREE.Mesh(new THREE.SphereGeometry(.5,10,8),new THREE.MeshLambertMaterial({color:0x3ddc97})); leaf.position.set(-3.6,.85,1.8); g.add(leaf);
+      prop(.8,.8,.06,0x35e0ff,1,2.6,2.8,{emi:1,nc:1});
+    }
+    // wall gauge (shows live pressure)
+    const gc=document.createElement('canvas'); gc.width=512; gc.height=176; const gtex=new THREE.CanvasTexture(gc);
+    const gauge=new THREE.Mesh(new THREE.PlaneGeometry(3.4,1.17),new THREE.MeshBasicMaterial({map:gtex})); gauge.rotation.y=Math.PI/2; gauge.position.set(-4.93,2.7,0); g.add(gauge);
+    // breach marker (hidden unless leaking) on the outer skin
+    const crack=new THREE.Mesh(new THREE.BoxGeometry(.7,.06,.08),new THREE.MeshBasicMaterial({color:0x220000})); crack.position.set(-1.5,2.4,3.02); crack.rotation.z=.5; crack.visible=false; g.add(crack);
+    base.add(g); const lb=label3d('MODULE '+md.n,'#35e0ff',5); lb.position.set(md.x,6.8,md.z); base.add(lb);
+    const c=Math.cos(th), sn=Math.sin(th), bl={x:-1.5,y:2.4,z:2.98};
+    const breach=new THREE.Vector3(md.x+bl.x*c+bl.z*sn,bl.y,md.z-bl.x*sn+bl.z*c), out=new THREE.Vector3(sn,0,c);
+    return {id:'mod'+md.n,kind:'module',name:'Module '+md.n+' ('+title.toLowerCase()+')',short:md.n,title,pos:new THREE.Vector3(md.x,2,md.z),r:4.8,group:g,leak:false,x:md.x,z:md.z,th,rects,rack,rackN:0,gauge,gc,gtex,gTxt:null,crack,breach,out,fact:md.f}; }
+  const modDefs=[{n:'A',x:-18,z:-4,k:'lab',f:'Space labs analyze samples carefully: gloveboxes and clean benches keep Earth microbes away from alien rock, and keep dust out of the cabin.'},
+                 {n:'B',x:-8,z:-19,k:'life',f:'Life-support racks scrub CO₂, make oxygen by electrolysis and recycle water. The ISS recovers about 90% of its water, including from sweat and breath.'},
+                 {n:'C',x:15,z:-14,k:'crew',f:'Crew quarters matter: private sleep space, a table to eat together and a plant or window all help morale on long missions.'}];
+  const modules=modDefs.map(buildModule);
   // solar array
   const panels=[]; for(let i=0;i<6;i++){ const px=4+i*5.4, pz=-27; const g=new THREE.Group(); g.position.set(px,0,pz);
     const pn=cast(new THREE.Mesh(new THREE.BoxGeometry(4.2,.15,2.6),new THREE.MeshLambertMaterial({color:0x2b4aa8,emissive:0x0a1a55}))); pn.position.y=1.9; pn.rotation.x=-.55; g.add(pn);
@@ -1578,7 +1625,7 @@ function startEVA(wk, mission){
      keys:{},joy:{x:0,y:0},collected:[],quizRight:0,quizTotal:0,last:performance.now(),hudT:0,presT:0,cardT:0,avatars,makeAvatar,resize,
      elapsed:0,lock:false,
      modules,panels,rov,boulder,plume,plPos,plVel,plAge,PL,dust,dPos,wp,P,
-     solids:[{x:0,z:0,r:6.2},{x:-15,z:-3,r:3.6},{x:-6,z:-16,r:3.6},{x:13,z:-11,r:3.6},{x:-27,z:18,r:3.8},{x:9,z:16,r:2.4}],
+     solids:[{x:0,z:0,r:6.2},{x:-27,z:18,r:3.8},{x:9,z:16,r:2.4}],inMod:null,roomFacts:[],modLights,lightMat,
      score:0,integ:100,power:100,em:null,emN:0,queue:[...EMSETS[wk]].sort(()=>erng()-.5),nextAt:35,solved:0,failed:0,missed:0,fixedIdx:new Set(),history:[],erng,
      scan:null,work:null,carry:0,deposited:0,crates:[],lessons:[],shake:0,fogBase:P.fogD,crew:null,flareDose:0};
   bindEvaInput();
@@ -1622,7 +1669,7 @@ function evaCamDir(){ const cp=Math.cos(E.pitch); return new THREE.Vector3(-Math
 function evaFindTarget(maxD,cone){
   const cp=E.camera.position, f=evaCamDir(); let best=null,bs=-1;
   for(const t of evaTargets()){ const v=new THREE.Vector3().subVectors(t.pos,cp), dist=v.length()-t.r*.6; if(dist>maxD) continue;
-    const dot=v.normalize().dot(f); const need=dist<8?Math.min(cone,.6):cone; if(dot<need) continue;
+    if(v.length()<.01){ best=t; bs=9; continue; } const dot=v.normalize().dot(f); const need=dist<8?Math.min(cone,.6):cone; if(dot<need) continue;
     const sc=dot-dist*.004; if(sc>bs){bs=sc;best=t;} }
   return best;
 }
@@ -1731,7 +1778,7 @@ function startEmergency(type){
   const d=EMERG[type], er=E.erng;
   const em={type,idx,stage:'find',identified:false,solved:false,tries:0,start:E.elapsed,limit:d.limit,limitLeft:d.limit,data:{}};
   E.em=em;
-  if(type==='leak'){ const k=Math.floor(er()*3); E.modules.forEach((m,i)=>m.leak=(i===k)); em.target=E.modules[k]; E.plume.visible=true; for(let i=0;i<E.PL;i++) E.plAge[i]=Math.random(); }
+  if(type==='leak'){ const k=Math.floor(er()*3); E.modules.forEach((m,i)=>{ m.leak=(i===k); m.crack.visible=(i===k); }); em.target=E.modules[k]; E.plume.visible=true; for(let i=0;i<E.PL;i++) E.plAge[i]=Math.random(); }
   if(type==='power'){ const k=Math.floor(er()*6); const cause=['dust','cable','crack'][Math.floor(er()*3)]; E.panels.forEach((p,i)=>p.bad=(i===k?cause:null)); em.target=E.panels[k]; E.panels[k].ind.material.color.set(0x3ddc97); }
   if(type==='medical'){ const a=er()*6.283, r=48+er()*14, x=Math.cos(a)*r, z=Math.sin(a)*r, cond=er()<.5?'hypoxia':'heat';
     const av=E.makeAvatar('Dr. Okafor','hsl(10,80%,60%)'); av.position.set(x,E.hgt(x,z)+.4,z); av.rotation.z=Math.PI/2; av.children.forEach(c=>{ if(c.isSprite) c.position.set(0,2.6,0); });
@@ -1769,7 +1816,7 @@ function failEmergency(reason){
   E.em=null; E.banner=''; E.nextAt=E.elapsed+22; E.work=null; E.shake=.8;
 }
 function clearEmergencyVisuals(em){
-  E.plume.visible=false; E.modules.forEach(m=>m.leak=false); E.panels.forEach(p=>{p.bad=null;});
+  E.plume.visible=false; E.modules.forEach(m=>{ m.leak=false; m.crack.visible=false; }); E.panels.forEach(p=>{p.bad=null;});
   if(em.type==='medical'&&E.crew){ E.crew.avatar.rotation.z=0; E.crew.avatar.position.y=E.hgt(E.crew.avatar.position.x,E.crew.avatar.position.z); setTimeout(()=>{ if(E&&E.crew){ E.scene.remove(E.crew.avatar); E.crew=null; } },3500); }
   if(em.type==='dust'){ E.crates.forEach(c=>E.scene.remove(c.m)); E.crates=[]; E.dust.visible=false; E.scene.fog.density=E.fogBase; }
   E.winMat.color.set(0xffe9a0); E.scene.fog.density=E.fogBase; $('#evaFlash').style.opacity=0;
@@ -1799,15 +1846,24 @@ function evaUpdate(dt,t){
   let nx=E.px+(-sinY*fx+cosY*sx)*sp*dt, nz=E.pz+(-cosY*fx-sinY*sx)*sp*dt;
   const r=Math.hypot(nx,nz); if(r>118){ nx*=118/r; nz*=118/r; }
   for(const s of E.solids){ const dx=nx-s.x, dz=nz-s.z, dd=Math.hypot(dx,dz); if(dd<s.r){ const k=s.r/Math.max(dd,.01); nx=s.x+dx*k; nz=s.z+dz*k; } }
+  let inside=null;
+  for(const m of E.modules){ const c=Math.cos(m.th), sn=Math.sin(m.th);
+    let xl=(nx-m.x)*c-(nz-m.z)*sn, zl=(nx-m.x)*sn+(nz-m.z)*c;
+    if(Math.abs(xl)>8||Math.abs(zl)>6) continue;
+    for(const rc of m.rects){ const cx=clamp(xl,rc.x0,rc.x1), cz=clamp(zl,rc.z0,rc.z1), dx=xl-cx, dz=zl-cz, dd=Math.hypot(dx,dz), rad=.45;
+      if(dd<rad){ if(dd>1e-4){ xl=cx+dx/dd*rad; zl=cz+dz/dd*rad; } else { const ds=[xl-rc.x0,rc.x1-xl,zl-rc.z0,rc.z1-zl], k=ds.indexOf(Math.min(...ds)); if(k===0) xl=rc.x0-rad; else if(k===1) xl=rc.x1+rad; else if(k===2) zl=rc.z0-rad; else zl=rc.z1+rad; } } }
+    nx=m.x+xl*c+zl*sn; nz=m.z-xl*sn+zl*c;
+    if(Math.abs(zl)<2.35&&xl>-4.7&&xl<5.1) inside=m; }
   E.px=nx; E.pz=nz;
+  if(inside!==E.inMod){ E.inMod=inside; if(inside){ evaToast(`🚪 <b>${esc(inside.name)}</b>: ${esc(inside.fact)}`); if(!E.roomFacts.includes(inside.fact)) E.roomFacts.push(inside.fact); beep(500,.12,'triangle'); } }
   const g=E.grav; if(K[' ']&&E.py<=.001){ E.vy=4.4; }
-  E.vy-=g*dt; E.py+=E.vy*dt; if(E.py<0){ E.py=0; E.vy=0; }
+  E.vy-=g*dt; E.py+=E.vy*dt; if(E.py<0){ E.py=0; E.vy=0; } if(E.inMod&&E.py>1.7){ E.py=1.7; E.vy=Math.min(E.vy,0); }
   const gy=E.hgt(E.px,E.pz), bob=(m>0&&E.py<.05)?Math.sin(t/140)*.04:0;
   const shk=E.shake>0?(Math.random()-.5)*E.shake*.15:0; E.shake=Math.max(0,E.shake-dt);
   E.camera.position.set(E.px+shk,gy+E.py+1.7+bob,E.pz); E.camera.rotation.set(E.pitch,E.yaw,0);
   E.sky.position.copy(E.camera.position);
   // suit oxygen
-  const near=Math.hypot(E.px,E.pz)<8;
+  const near=Math.hypot(E.px,E.pz)<8||!!E.inMod;
   E.o2=clamp(E.o2+(near?20:-.5)*dt);
   if(E.wk==='europa'&&!near) E.dose+=dt*.45;
   // sample pickups
@@ -1828,6 +1884,7 @@ function evaUpdate(dt,t){
   // lights / power visuals
   const powerFail=em&&em.type==='power'&&!em.solved;
   E.power=clamp(E.power+(powerFail?-6:10)*dt);
+  E.modLights.forEach(l=>{ l.intensity=powerFail?(E.power<50?.12:(Math.random()<.2?1:.4)):1; }); E.lightMat.color.set(powerFail?(E.power<50?0x2a2a3a:(Math.random()<.2?0xfff4d8:0x806a40)):0xfff4d8);
   E.winMat.color.set(powerFail?(Math.random()<.18?0xffe9a0:(E.power<50?0x1a1a2a:0xb8955a)):0xffe9a0);
   E.amb.intensity=1.1-(powerFail?.15:0);
   // multiplayer avatars
@@ -1842,7 +1899,7 @@ function evaUpdate(dt,t){
     for(const [id,av] of E.avatars) if(!seen.has(id)){ E.scene.remove(av); E.avatars.delete(id); }
   }
   // particles
-  if(E.plume.visible&&em&&em.target){ const o=em.target.pos; for(let i=0;i<E.PL;i++){ E.plAge[i]+=dt*.9; if(E.plAge[i]>1){ E.plAge[i]=0; E.plPos[i*3]=o.x+Math.random()*.8-.4; E.plPos[i*3+1]=o.y+1.2; E.plPos[i*3+2]=o.z+2.3; E.plVel[i*3]=(Math.random()-.5)*2; E.plVel[i*3+1]=Math.random()*3+1; E.plVel[i*3+2]=Math.random()*5+2; }
+  if(E.plume.visible&&em&&em.target&&em.target.breach){ const o=em.target.breach, ou=em.target.out; for(let i=0;i<E.PL;i++){ E.plAge[i]+=dt*.9; if(E.plAge[i]>1){ E.plAge[i]=0; E.plPos[i*3]=o.x+Math.random()*.3-.15; E.plPos[i*3+1]=o.y+Math.random()*.2; E.plPos[i*3+2]=o.z+Math.random()*.3-.15; const sp=2+Math.random()*4; E.plVel[i*3]=ou.x*sp+(Math.random()-.5)*1.5; E.plVel[i*3+1]=Math.random()*2+.5; E.plVel[i*3+2]=ou.z*sp+(Math.random()-.5)*1.5; }
       E.plPos[i*3]+=E.plVel[i*3]*dt; E.plPos[i*3+1]+=E.plVel[i*3+1]*dt; E.plPos[i*3+2]+=E.plVel[i*3+2]*dt; } E.plume.geometry.attributes.position.needsUpdate=true; }
   if(E.dust.visible){ const arr=E.dPos, cp=E.camera.position, k=em&&em.type==='dust'?Math.max(0,1-(em.data.arrive-E.elapsed)/60):0; E.dust.material.opacity=.15+.7*k;
     for(let i=0;i<arr.length/3;i++){ arr[i*3]-=dt*(3+k*14); if(arr[i*3]<cp.x-40) arr[i*3]+=80; if(arr[i*3]>cp.x+40) arr[i*3]-=80; if(Math.abs(arr[i*3+2]-cp.z)>40) arr[i*3+2]=cp.z+(Math.random()-.5)*80; if(arr[i*3+1]>14) arr[i*3+1]=0; arr[i*3+1]+=dt*.5; }
@@ -1902,7 +1959,15 @@ function evaPrompt(){
   if(E.em&&E.em.type==='dust') html+=`<div class="hb">📦 Crates secured: <b>${E.deposited}/3</b> ${E.carry?` · carrying ${E.carry}`:''}</div>`;
   el.innerHTML=html;
 }
+function updateGauges(){
+  for(const m of E.modules){ const leaking=!!(m.leak&&E.em&&E.em.type==='leak'&&!E.em.solved), txt=leaking?'L':'N'; if(m.gTxt===txt) continue; m.gTxt=txt;
+    const x=m.gc.getContext('2d'); x.fillStyle=leaking?'#3a0a12':'#06122a'; x.fillRect(0,0,512,176); x.strokeStyle=leaking?'#ff5d6c':'#35e0ff'; x.lineWidth=6; x.strokeRect(3,3,506,170);
+    x.fillStyle='#9aa6d6'; x.font='bold 30px sans-serif'; x.textAlign='center'; x.fillText('MODULE '+m.short+' · '+m.title,256,48);
+    x.fillStyle=leaking?'#ff5d6c':'#3ddc97'; x.font='bold 56px sans-serif'; x.fillText(leaking?'68 kPa ▼':'101 kPa ✓',256,112);
+    x.fillStyle='#9aa6d6'; x.font='24px sans-serif'; x.fillText(leaking?'PRESSURE FALLING: LEAK?':'cabin pressure nominal',256,152); m.gtex.needsUpdate=true; }
+}
 function evaHud(){
+  updateGauges();
   const left=E.items.filter(i=>!i.got&&!i.quiz).length, dist=Math.round(Math.hypot(E.px,E.pz));
   const o2c=E.o2>50?'var(--good)':E.o2>25?'var(--warn)':'var(--bad)';
   const ic=E.integ>60?'var(--good)':E.integ>30?'var(--warn)':'var(--bad)';
@@ -1937,7 +2002,7 @@ function evaMap(){
   x.translate(R,R); x.rotate(E.yaw); const P=(wx,wz)=>[(wx-E.px)*sc,(wz-E.pz)*sc];
   x.strokeStyle='rgba(53,224,255,.2)'; x.lineWidth=1; [20,40,60].forEach(rr=>{ x.beginPath(); x.arc(0,0,rr*sc,0,7); x.stroke(); });
   let p=P(0,0); x.fillStyle='#dde3ff'; x.beginPath(); x.arc(p[0],p[1],5*sc,0,7); x.fill();
-  E.modules.forEach(m=>{ p=P(m.pos.x,m.pos.z); x.fillStyle=(E.em&&E.em.type==='leak'&&m.leak&&E.em.identified)?'#ff5d6c':'#8e98c8'; x.fillRect(p[0]-3,p[1]-3,6,6); });
+  E.modules.forEach(m=>{ p=P(m.x,m.z); x.save(); x.translate(p[0],p[1]); x.rotate(-m.th); x.fillStyle=(E.em&&E.em.type==='leak'&&m.leak&&E.em.identified)?'#ff5d6c':'#8e98c8'; x.fillRect(-5*sc,-2.6*sc,10*sc,5.2*sc); x.fillStyle='#35e0ff'; x.fillRect(4.4*sc,-1.5*sc,1.2*sc,3*sc); x.restore(); });
   E.panels.forEach(m=>{ p=P(m.pos.x,m.pos.z); x.fillStyle='#2b6fe0'; x.fillRect(p[0]-1.5,p[1]-1.5,3,3); });
   E.items.forEach(it=>{ if(it.got) return; p=P(it.x,it.z); x.fillStyle=EVACOL[it.type]; x.beginPath(); x.arc(p[0],p[1],2,0,7); x.fill(); });
   for(const [id,av] of E.avatars){ p=P(av.position.x,av.position.z); x.fillStyle='#3ddc97'; x.beginPath(); x.arc(p[0],p[1],3,0,7); x.fill(); }
@@ -1950,7 +2015,7 @@ function evaCollect(it){
   it.got=true; it.mesh.visible=false; it.beam.visible=false; beep(820,.15,'triangle');
   if(MP.room) MP.room.emit('sample',{ew:E.ew,i:it.i,who:MP.name}).catch(()=>{});
   if(it.quiz) return evaQuiz(it);
-  E.collected.push(it); addScore(50,'sample');
+  E.collected.push(it); addScore(50,'sample'); { const lab=E.modules[0]; if(lab&&lab.rack){ const n=lab.rackN++; const cube=new THREE.Mesh(new THREE.BoxGeometry(.3,.3,.3),new THREE.MeshStandardMaterial({color:EVACOL[it.type],emissive:EVACOL[it.type],emissiveIntensity:.5})); cube.position.set((n%4)*.5-.75,(Math.floor(n/4)%2)*.6,0); lab.rack.add(cube); } }
   evaToast(`✅ <b>${esc(it.name)}</b><br>${esc(it.fact)}`);
 }
 function evaQuiz(it){
@@ -1975,7 +2040,7 @@ function evaFinish(reason){
   if(E.em&&!E.em.solved){ E.missed++; E.history.push({type:E.em.type,res:'abandoned'}); E.lessons.push(EMERG[E.em.type].lesson); }
   let sci=0,mat=0,water=0; const learned=[];
   E.collected.forEach(it=>{ const r=EVAREW[it.type]; sci+=r.sci||0; mat+=r.mat||0; water+=r.water||0; learned.push(it.fact); });
-  sci+=E.quizRight*6+E.solved*8; (E.learnedQ||[]).forEach(w=>learned.push(w));
+  sci+=E.quizRight*6+E.solved*8+E.roomFacts.length*2; (E.learnedQ||[]).forEach(w=>learned.push(w)); E.roomFacts.forEach(w=>learned.push(w));
   const dose=Math.round(E.dose), o2out=reason==='o2', lost=reason==='integrity';
   const total=E.history.length+(E.queue.length), solvedAll=E.solved===EMSETS[E.wk].length;
   const grade=lost||o2out?'F':solvedAll&&E.score>=1400?'S':E.solved>=3&&E.score>=800?'A':E.solved>=2?'B':'C';
