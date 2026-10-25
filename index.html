@@ -90,13 +90,26 @@
 
   #eva{position:fixed;inset:0;z-index:100;background:#000;touch-action:none}
   #evaC{display:block;width:100%;height:100%}
-  #evaHud{position:absolute;left:10px;top:10px;right:10px;display:flex;gap:10px;flex-wrap:wrap;pointer-events:none}
-  .hb{background:rgba(5,8,22,.72);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.85rem;min-width:130px}
+  #evaHud{position:absolute;left:10px;top:10px;right:176px;display:flex;gap:10px;flex-wrap:wrap;pointer-events:none}
+  .hb{background:rgba(5,8,22,.72);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:.85rem;min-width:118px}
   .hb b{font-family:var(--display);font-size:.8rem;color:var(--accent)}
   .hb .track{height:7px;background:#16204a;border-radius:5px;margin-top:4px;overflow:hidden}
   .hb .fill{height:100%}
-  #evaTop{position:absolute;right:10px;top:10px;display:flex;gap:8px}
-  #evaCard{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);width:min(560px,92vw);pointer-events:none}
+  #evaTop{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+  #evaMapC{width:150px;height:150px;border-radius:50%;box-shadow:0 0 18px rgba(53,224,255,.3)}
+  #evaVig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,10,.55) 100%)}
+  #evaAlarm{position:absolute;inset:0;pointer-events:none;opacity:0;box-shadow:inset 0 0 120px 30px rgba(255,40,60,.75)}
+  #evaFlash{position:absolute;inset:0;pointer-events:none;opacity:0;background:rgba(255,245,200,.85);transition:opacity 1.2s}
+  #evaObj{position:absolute;left:10px;top:42%;pointer-events:none}
+  #evaBanner{position:absolute;left:50%;top:112px;transform:translateX(-50%);pointer-events:none}
+  #evaBanner .ban{font-family:var(--display);font-weight:700;letter-spacing:.08em;background:rgba(160,10,30,.88);border:1px solid #ff8a97;padding:8px 18px;border-radius:8px;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.55}}
+  #evaPrompt{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);display:flex;gap:8px;flex-direction:column;align-items:center;pointer-events:none}
+  #evaBtns{position:absolute;right:14px;bottom:150px;display:none;flex-direction:column;gap:8px;z-index:2}
+  .touch #evaBtns{display:flex}
+  .touch #evaHint{display:none}
+  .touch #evaObj{top:auto;bottom:210px}
+  #evaCard{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);width:min(560px,92vw);pointer-events:none}
   #evaCard .fact{background:rgba(5,8,22,.9);margin:0;animation:pop .3s}
   #evaCross{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border:2px solid rgba(255,255,255,.55);border-radius:50%;pointer-events:none}
   #evaHint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);font-size:.8rem;color:var(--muted);background:rgba(5,8,22,.6);padding:4px 10px;border-radius:8px;pointer-events:none;text-align:center;width:max-content;max-width:94vw}
@@ -124,12 +137,17 @@
 <div id="toasts"></div>
 <div id="eva" class="hidden">
   <canvas id="evaC"></canvas>
+  <div id="evaVig"></div><div id="evaAlarm"></div><div id="evaFlash"></div>
   <div id="evaCross"></div>
   <div id="evaHud"></div>
-  <div id="evaTop"><button id="evaBack" onclick="evaFinish('manual')">🏠 Return to habitat (E)</button></div>
+  <div id="evaObj"></div>
+  <div id="evaTop"><canvas id="evaMapC" width="150" height="150"></canvas><button id="evaBack" onclick="evaFinish('manual')">🏠 End shift (H)</button></div>
+  <div id="evaBanner"></div>
+  <div id="evaPrompt"></div>
   <div id="evaCard"></div>
-  <div id="evaHint">Click to look around · WASD move · Space jump · Shift sprint · E return</div>
+  <div id="evaHint">WASD move · Shift sprint · Space jump · <b>F</b> scan · <b>E</b> use/repair · <b>Q</b> radio hint · H end shift</div>
   <div id="joy"><div id="joyK"></div></div><div id="lookZ"></div><button id="jumpB">⤒</button>
+  <div id="evaBtns"><button id="bScan">🔎 Scan</button><button id="bUse">🛠 Use</button><button id="bRadio">📻 Hint</button></div>
   <div id="evaOv" class="hidden"></div>
 </div>
 <main>
@@ -476,6 +494,7 @@ const ACHIEVEMENTS = {
   survivor:{icon:'🏅',name:'Survivor',txt:'Complete the mission.'},
   greens:{icon:'🌱',name:'Green Thumb',txt:'Harvest 5 times.'},
   eva:{icon:'🥽',name:'Moonwalker',txt:'Finish a 3D first-person EVA.'},
+  responder:{icon:'🚨',name:'First Responder',txt:'Solve 3 emergencies in one 3D shift.'},
   team:{icon:'🤝',name:'Good Teammate',txt:'Send supplies to a crewmate.'},
   student:{icon:'📚',name:'Quick Study',txt:'Finish 3 Academy lessons.'},
   graduate:{icon:'🎖️',name:'Mission Graduate',txt:'Finish every Academy lesson.'}
@@ -706,7 +725,7 @@ function renderMenu(){
   <div class="modes">
     <button onclick="document.getElementById('dests').scrollIntoView({behavior:'smooth'})"><b>🚀 Mission mode</b><small style="color:var(--muted)">Land, survive, build a base and learn. Pick a destination below.</small></button>
     <button onclick="scr='mp';render()"><b>👥 Multiplayer crew</b><small style="color:var(--muted)">Join friends live: send supplies and explore in 3D together.${MP.room?' <span class="tag">Crew '+esc(MP.code.toUpperCase())+'</span>':''}</small></button>
-    <button onclick="pick3D()"><b>🥽 3D first-person explorer</b><small style="color:var(--muted)">Walk on the Moon, Mars or Europa in low gravity, collect samples, learn.</small></button>
+    <button onclick="pick3D()"><b>🥽 3D first-person explorer</b><small style="color:var(--muted)">Walk the base, diagnose and fix emergencies in real gravity, collect samples, learn.</small></button>
   </div>
   ${MP.room?`<div class="card"><div id="roster">${rosterHTML()}</div></div>`:''}
   <div class="card" id="dests">
@@ -737,7 +756,7 @@ function renderMenu(){
 }
 function pick3D(){
   app.innerHTML=`<div class="card"><h2>🥽 3D first-person explorer</h2>
-    <p class="sub">Choose a world. Walk, sprint and jump in the real gravity of that world, collect glowing samples and answer mission-control beacons. Watch your suit oxygen!</p>
+    <p class="sub">Choose a world. Run a shift at the base: emergencies strike (air leaks, power failures, injured crew, solar flares). <b>Scan to identify the problem, then choose the right fix</b> before time runs out. Collect samples in between.</p>
     <div class="grid">${Object.entries(DESTS).map(([k,d])=>`<button class="dest" onclick="startEVA('${k}',false)"><span class="emoji">${d.emoji}</span><b style="font-family:var(--display)">${esc(d.name)}</b><small style="color:var(--muted)">${esc(d.facts[0])}</small></button>`).join('')}</div>
     ${MP.room?'<p class="sub" style="margin-top:10px">👥 You are in crew '+esc(MP.code.toUpperCase())+': crewmates who pick the same world will appear next to you.</p>':''}
   </div><div class="row"><button onclick="scr='menu';render()">◀ Back</button></div>`;
@@ -987,7 +1006,7 @@ function tabActions(){
     return `<button onclick="doAction('${a.id}')" ${ok?'':'disabled'}><b>${a.icon} ${a.name}</b>
       <small>${a.desc}</small>${gain?`<br><small>Yields ${gain}</small>`:''}</button>`;
   }).join('')}</div>
-  <div class="row" style="margin-top:12px"><button style="flex:1" onclick="startEVA(G.key,true)" ${G.ap>0&&window.THREE?'':'disabled'}><b>🥽 3D surface EVA (first person)</b><br><small style="color:var(--muted)">Walk outside in real gravity, collect samples, answer beacons. Takes one action.</small></button></div>
+  <div class="row" style="margin-top:12px"><button style="flex:1" onclick="startEVA(G.key,true)" ${G.ap>0&&window.THREE?'':'disabled'}><b>🥽 3D surface EVA (first person)</b><br><small style="color:var(--muted)">Run a base shift: identify and fix emergencies, collect samples. Takes one action.</small></button></div>
   <div class="row" style="margin-top:12px"><button class="primary" style="flex:1" onclick="endDay()">🌙 END DAY ${G.ap>0?`(${G.ap} AP unused)`:''}</button></div></div>`;
 }
 
@@ -1273,6 +1292,7 @@ async function mpJoin(){
     MP.unsubs.push(nr.onPeers(()=>updateRoster()));
     MP.unsubs.push(nr.on('help',onHelp));
     MP.unsubs.push(nr.on('sample',onTeamSample));
+    MP.unsubs.push(nr.on('fix',onFix));
     mpSync(); renderMP();
   }catch(e){ MP.msg='Could not join: '+(e&&e.message||'unknown error'); MP.room=null; renderMP(); }
 }
@@ -1383,80 +1403,145 @@ function hash32(s){ let h=2166136261; for(const c of String(s)){ h^=c.charCodeAt
 function mulberry(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 function evaToast(html){ const el=$('#evaCard'); el.innerHTML=`<div class="fact">${html}</div>`; clearTimeout(E&&E.cardT); if(E) E.cardT=setTimeout(()=>{ if(E) el.innerHTML=''; },7000); }
 
+/* ---- emergency definitions (identify the problem, then solve it) ---- */
+const EMERG = {
+  leak:{icon:'💨',title:'HULL BREACH: AIR LEAK',limit:140,
+    lesson:'Real spacecraft hold about 101 kPa of air. In 2018 a 2 mm hole was found in a Soyuz docked to the ISS: crews tracked it by watching pressure fall, found the spot, and sealed it with a patch. Never fix a leak by just adding more air.',
+    hint:{find:'Scan each module with F. A healthy module reads about 101 kPa. The leaking one reads lower and falling.',tool:'Think about what actually STOPS air escaping, not what hides it or adds more.'}},
+  power:{icon:'⚡',title:'POWER FAILURE',limit:140,
+    lesson:'Solar panels on Mars and the Moon lose power to dust. NASA\'s Spirit and Opportunity rovers were sometimes saved by wind "cleaning events". Engineers diagnose a fault from its symptoms: low output with dust vs. zero current vs. a physical crack each need a different fix.',
+    hint:{find:'Scan the six panels (F). Healthy panels make about 4.2 kW. Read the faulty one\'s symptoms closely.',tool:'Match the fix to the symptom: dust, a disconnected cable and a cracked cell are different problems.'}},
+  medical:{icon:'🩺',title:'CREWMATE DOWN',limit:120,
+    lesson:'Suit problems can become emergencies fast: without oxygen, confusion and collapse follow within minutes; without cooling, an astronaut overheats because space has no air to carry heat away. In 2013 an ESA astronaut\'s helmet filled with water during a spacewalk, so crews train for suit failures. NEVER open a helmet in a vacuum.',
+    hint:{find:'Follow the marker to your crewmate and scan their vitals with F.',tool:'Read the vitals. Is this a lack of oxygen, or too much heat? Treat the actual cause.'}},
+  flare:{icon:'☢️',title:'SOLAR FLARE WARNING',limit:45,
+    lesson:'Dense, hydrogen-rich material shields best, which is why the water-lined storm cell is the safest place. In August 1972, a huge solar storm happened between Apollo 16 and 17: if astronauts had been on the Moon they would have faced a serious dose.',
+    hint:{find:'Pick the best shelter, then run to it before the particle wave arrives.',tool:'Stay inside until the all-clear.'}},
+  dust:{icon:'🌪️',title:'DUST STORM INBOUND',limit:80,
+    lesson:'Martian dust storms can cover the whole planet and block sunlight for weeks. The air is so thin that wind will not knock you over, but fine dust fouls equipment and panels, so crews secure gear and conserve power. The 2018 storm ended the Opportunity rover\'s mission.',
+    hint:{find:'Collect all three loose equipment crates, then bring each one to the habitat before the storm hits.',tool:''}}
+};
+const EMSETS={moon:['leak','power','medical','flare'],mars:['dust','power','leak','medical'],europa:['flare','power','leak','medical']};
+
+function radio(msg){ evaToast(`📻 <b>Mission Control:</b> ${msg}`); beep(600,.08,'square'); }
+function addScore(n,why){ E.score+=n; E.feed=(E.feed||[]); if(why) evaFloat((n>=0?'+':'')+n+' '+why,n>=0); }
+function evaFloat(t,good){ const el=document.createElement('div'); el.textContent=t; el.style.cssText=`position:absolute;left:50%;top:38%;transform:translateX(-50%);font-family:var(--display);font-size:1.1rem;color:${good?'#3ddc97':'#ff5d6c'};text-shadow:0 2px 6px #000;pointer-events:none;transition:all 1.6s;opacity:1`; $('#eva').appendChild(el); requestAnimationFrame(()=>{ el.style.top='28%'; el.style.opacity='0'; }); setTimeout(()=>el.remove(),1700); }
+function label3d(text,color,w){ const cc=document.createElement('canvas'); cc.width=256; cc.height=64; const x=cc.getContext('2d'); x.font='bold 30px sans-serif'; x.textAlign='center'; x.fillStyle='rgba(5,8,22,.75)'; x.fillRect(0,8,256,48); x.fillStyle=color||'#35e0ff'; x.fillText(text,128,44);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cc),fog:false,depthTest:false,transparent:true})); sp.scale.set(w||4,(w||4)/4,1); sp.renderOrder=5; return sp; }
+function iconSprite(emoji){ const cc=document.createElement('canvas'); cc.width=128; cc.height=128; const x=cc.getContext('2d'); x.font='84px sans-serif'; x.textAlign='center'; x.textBaseline='middle'; x.fillText(emoji,64,70);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cc),fog:false,depthTest:false,transparent:true})); sp.scale.set(2.6,2.6,1); sp.renderOrder=6; return sp; }
+
 function startEVA(wk, mission){
   if(E) return;
   if(!window.THREE){ toast('⚠ The 3D engine could not load (it needs an internet connection).'); return; }
   if(mission){ if(!G||G.ap<1) return; G.ap--; }
   const d=DESTS[wk], grav={moon:1.62,mars:3.71,europa:1.31}[wk];
   const seedStr = MP.room ? MP.code+':'+wk : null;
-  const rng = mulberry(seedStr?hash32(seedStr):(Math.random()*4294967296)>>>0);
   const ew = seedStr || ('solo'+Math.random().toString(36).slice(2));
+  const rng = mulberry(seedStr?hash32(seedStr):(Math.random()*4294967296)>>>0);
+  const erng = mulberry(hash32(ew+':emergency'));
   const P = {
-    moon:{bg:0x000206,fog:0x05060c,fogD:.0035,ground:[.55,.55,.58],rock:0x77777f,sun:0xffffff,amb:0x303040,sunI:1.35},
-    mars:{bg:0xb87a55,fog:0xc88a62,fogD:.0085,ground:[.70,.34,.18],rock:0x8a4a2c,sun:0xffe2c0,amb:0x7a4a38,sunI:1.05},
-    europa:{bg:0x000104,fog:0x070a14,fogD:.004,ground:[.80,.89,.94],rock:0xaec7d6,sun:0xfff4dc,amb:0x2a3a55,sunI:.85}
+    moon:{bg:0x000206,fog:0x05060c,fogD:.0025,ground:[.55,.55,.58],rock:0x77777f,sun:0xffffff,amb:0x303040,sunI:1.5},
+    mars:{bg:0xb87a55,fog:0xc88a62,fogD:.0075,ground:[.70,.34,.18],rock:0x8a4a2c,sun:0xffe2c0,amb:0x7a4a38,sunI:1.15},
+    europa:{bg:0x000104,fog:0x070a14,fogD:.0035,ground:[.80,.89,.94],rock:0xaec7d6,sun:0xfff4dc,amb:0x2a3a55,sunI:.95}
   }[wk];
   const cv=$('#evaC'), wrap=$('#eva');
-  wrap.classList.remove('hidden'); $('#evaOv').classList.add('hidden'); $('#evaCard').innerHTML='';
+  wrap.classList.remove('hidden'); $('#evaOv').classList.add('hidden'); $('#evaCard').innerHTML=''; $('#evaBanner').innerHTML=''; $('#evaPrompt').innerHTML='';
   document.body.style.overflow='hidden';
   const renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+  renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   const scene=new THREE.Scene(); scene.background=new THREE.Color(P.bg); scene.fog=new THREE.FogExp2(P.fog,P.fogD);
   const camera=new THREE.PerspectiveCamera(72,1,.1,700); camera.rotation.order='YXZ';
   function resize(){ const w=wrap.clientWidth||innerWidth,h=wrap.clientHeight||innerHeight; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
   resize(); addEventListener('resize',resize);
-  scene.add(new THREE.AmbientLight(P.amb,1.1));
-  const sun=new THREE.DirectionalLight(P.sun,P.sunI); sun.position.set(120,90,60); scene.add(sun);
+  const amb=new THREE.AmbientLight(P.amb,1.1); scene.add(amb);
+  const sun=new THREE.DirectionalLight(P.sun,P.sunI); sun.position.set(80,70,40); sun.castShadow=true;
+  sun.shadow.mapSize.set(1024,1024); const sc=sun.shadow.camera; sc.left=-60;sc.right=60;sc.top=60;sc.bottom=-60;sc.near=1;sc.far=260; sun.shadow.bias=-.0005;
+  scene.add(sun); scene.add(sun.target);
   // sky
   const sky=new THREE.Group(); scene.add(sky);
-  if(wk!=='mars'){ const pts=[]; for(let i=0;i<700;i++){ const a=rng()*6.283,b=Math.acos(2*rng()-1),r=500; pts.push(r*Math.sin(b)*Math.cos(a),Math.abs(r*Math.cos(b))*.9+10,r*Math.sin(b)*Math.sin(a)); }
+  if(wk!=='mars'){ const pts=[]; for(let i=0;i<800;i++){ const a=rng()*6.283,b=Math.acos(2*rng()-1),r=500; pts.push(r*Math.sin(b)*Math.cos(a),Math.abs(r*Math.cos(b))*.9+10,r*Math.sin(b)*Math.sin(a)); }
     const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
-    const st=new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:1.6,sizeAttenuation:false,fog:false})); sky.add(st); }
-  const sunMesh=new THREE.Mesh(new THREE.SphereGeometry(wk==='europa'?5:wk==='mars'?9:12,16,12),new THREE.MeshBasicMaterial({color:P.sun,fog:false})); sunMesh.position.set(300,220,150); sky.add(sunMesh);
+    sky.add(new THREE.Points(g,new THREE.PointsMaterial({color:0xffffff,size:1.7,sizeAttenuation:false,fog:false}))); }
+  const sunMesh=new THREE.Mesh(new THREE.SphereGeometry(wk==='europa'?5:wk==='mars'?9:12,16,12),new THREE.MeshBasicMaterial({color:P.sun,fog:false})); sunMesh.position.set(300,200,100); sky.add(sunMesh);
   if(wk==='moon'){ const e=new THREE.Mesh(new THREE.SphereGeometry(26,24,16),new THREE.MeshBasicMaterial({color:0x3a7bd5,fog:false})); e.position.set(-260,170,-300); sky.add(e);
     const c=new THREE.Mesh(new THREE.SphereGeometry(26.5,12,8),new THREE.MeshBasicMaterial({color:0xffffff,fog:false,transparent:true,opacity:.35,wireframe:true})); c.position.copy(e.position); sky.add(c); }
   if(wk==='europa'){ const c2=document.createElement('canvas'); c2.width=256;c2.height=256; const x=c2.getContext('2d'); ['#d9a066','#b9763f','#e8c9a0','#a1612f','#d9a066','#c88a52','#e8c9a0'].forEach((col,i)=>{x.fillStyle=col;x.fillRect(0,i*37,256,37);}); x.fillStyle='rgba(200,60,40,.7)'; x.beginPath(); x.ellipse(170,150,30,16,0,0,7); x.fill();
     const j=new THREE.Mesh(new THREE.SphereGeometry(120,32,24),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c2),fog:false})); j.position.set(-280,150,-420); sky.add(j); }
-  // terrain
+  // terrain: large flat base area, rolling terrain beyond
   const ph=[rng()*6.28,rng()*6.28,rng()*6.28,rng()*6.28,rng()*6.28];
-  const craters=Array.from({length:9},()=>({x:rng()*190-95,z:rng()*190-95,r:8+rng()*16,d:1.2+rng()*2.4}));
+  const craters=Array.from({length:9},()=>{ const a=rng()*6.283, r=55+rng()*45; return {x:Math.cos(a)*r,z:Math.sin(a)*r,r:8+rng()*16,d:1.2+rng()*2.4}; });
   const sm=(a,b,v)=>{ const t=clamp((v-a)/(b-a),0,1); return t*t*(3-2*t); };
   function hgt(x,z){
     let h=Math.sin(x*.045+ph[0])*2.2+Math.sin(z*.05+ph[1])*2+Math.sin((x+z)*.11+ph[2])*.8+Math.sin(x*.2+ph[3])*Math.sin(z*.17+ph[4])*.35;
     for(const c of craters){ const dd=Math.hypot(x-c.x,z-c.z)/c.r; if(dd<1.25){ h-=c.d*(1-dd*dd)*(dd<1?1:0); if(dd>.85&&dd<1.25) h+=.6*Math.exp(-Math.pow((dd-1.05)*6,2)); } }
-    return h*sm(8,26,Math.hypot(x,z));
+    return h*sm(38,66,Math.hypot(x,z));
   }
-  const SEG=120, SIZE=260;
+  const SEG=140, SIZE=300;
   const tg=new THREE.PlaneGeometry(SIZE,SIZE,SEG,SEG); tg.rotateX(-Math.PI/2);
   const pos=tg.attributes.position, col=new Float32Array(pos.count*3);
   for(let i=0;i<pos.count;i++){ const x=pos.getX(i), z=pos.getZ(i), h=hgt(x,z); pos.setY(i,h);
     const n=.82+.18*Math.sin(x*.31+z*.23)*Math.sin(x*.07-z*.11)+.07*Math.sin(x*1.3)*Math.cos(z*1.1);
-    const sh=1+h*.03;
-    col[i*3]=P.ground[0]*n*sh; col[i*3+1]=P.ground[1]*n*sh; col[i*3+2]=P.ground[2]*n*sh; }
+    const sh=1+h*.03, r=Math.hypot(x,z), pad=(r<9?.78:1);
+    col[i*3]=P.ground[0]*n*sh*pad; col[i*3+1]=P.ground[1]*n*sh*pad; col[i*3+2]=P.ground[2]*n*sh*pad; }
   tg.setAttribute('color',new THREE.BufferAttribute(col,3)); tg.computeVertexNormals();
-  scene.add(new THREE.Mesh(tg,new THREE.MeshLambertMaterial({vertexColors:true,flatShading:true})));
-  // rocks
-  const rockMat=new THREE.MeshLambertMaterial({color:P.rock,flatShading:true});
-  for(let i=0;i<90;i++){ const a=rng()*6.283,r=14+rng()*105,x=Math.cos(a)*r,z=Math.sin(a)*r,sc=.3+rng()*1.3;
-    const m=new THREE.Mesh(new THREE.DodecahedronGeometry(sc,0),rockMat); m.position.set(x,hgt(x,z)+sc*.35,z); m.rotation.set(rng()*3,rng()*3,rng()*3); m.scale.y=.6+rng()*.5; scene.add(m); }
-  // habitat
-  const hab=new THREE.Group(); const white=new THREE.MeshLambertMaterial({color:0xdde3ff});
-  const dome=new THREE.Mesh(new THREE.SphereGeometry(5,28,14,0,Math.PI*2,0,Math.PI/2),white); hab.add(dome);
-  const base=new THREE.Mesh(new THREE.CylinderGeometry(5.2,5.4,.8,28),new THREE.MeshLambertMaterial({color:0x8e98c8})); base.position.y=.2; hab.add(base);
-  const door=new THREE.Mesh(new THREE.BoxGeometry(1.8,2.6,.4),new THREE.MeshLambertMaterial({color:0x35e0ff,emissive:0x0a5566})); door.position.set(0,1.3,5); hab.add(door);
-  const ant=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,4,6),white); ant.position.set(-1,6.5,0); hab.add(ant);
-  const beacon=new THREE.Mesh(new THREE.SphereGeometry(.25,8,8),new THREE.MeshBasicMaterial({color:0xff5d6c})); beacon.position.set(-1,8.6,0); hab.add(beacon);
-  for(let i=0;i<3;i++){ const pn=new THREE.Mesh(new THREE.BoxGeometry(5,.15,2.4),new THREE.MeshLambertMaterial({color:0x2b4aa8,emissive:0x0a1a55})); pn.position.set(9+i*5.5,1.8,-4); pn.rotation.x=-.5; hab.add(pn); const pole=new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,1.8,6),white); pole.position.set(9+i*5.5,.9,-4); hab.add(pole); }
-  const rov=new THREE.Group(); const rb=new THREE.Mesh(new THREE.BoxGeometry(3.2,1,2),new THREE.MeshLambertMaterial({color:0xe8edff})); rb.position.y=1.1; rov.add(rb);
-  [[-1.2,-1],[1.2,-1],[-1.2,1],[1.2,1]].forEach(([wx,wz])=>{ const w=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.4,12),new THREE.MeshLambertMaterial({color:0x222222})); w.rotation.x=Math.PI/2; w.position.set(wx,.55,wz*1.1); rov.add(w); });
-  rov.position.set(-9,0,9); hab.add(rov);
-  hab.position.y=hgt(0,0); scene.add(hab);
-  rov.position.y=hgt(-9,9)-hgt(0,0);
-  // collectibles
+  const terr=new THREE.Mesh(tg,new THREE.MeshLambertMaterial({vertexColors:true})); terr.receiveShadow=true; scene.add(terr);
+  // scattered rocks
+  const rockMat=new THREE.MeshStandardMaterial({color:P.rock,flatShading:true,roughness:1,metalness:0});
+  for(let i=0;i<110;i++){ const a=rng()*6.283,r=34+rng()*95,x=Math.cos(a)*r,z=Math.sin(a)*r,s=.3+rng()*1.5;
+    const m=new THREE.Mesh(new THREE.DodecahedronGeometry(s,0),rockMat); m.position.set(x,hgt(x,z)+s*.35,z); m.rotation.set(rng()*3,rng()*3,rng()*3); m.scale.y=.6+rng()*.5; m.castShadow=true; m.receiveShadow=true; scene.add(m); }
+  // ----- base complex -----
+  const white=new THREE.MeshLambertMaterial({color:0xdde3ff}), grey=new THREE.MeshLambertMaterial({color:0x8e98c8}), dark=new THREE.MeshLambertMaterial({color:0x2a3050});
+  const winMat=new THREE.MeshBasicMaterial({color:0xffe9a0});
+  const base=new THREE.Group(); scene.add(base);
+  const cast=(m)=>{ m.castShadow=true; m.receiveShadow=true; return m; };
+  const hub=cast(new THREE.Mesh(new THREE.SphereGeometry(5,28,14,0,Math.PI*2,0,Math.PI/2),white)); base.add(hub);
+  const disc=cast(new THREE.Mesh(new THREE.CylinderGeometry(5.2,5.5,.8,28),grey)); disc.position.y=.3; base.add(disc);
+  const door=new THREE.Mesh(new THREE.BoxGeometry(2,2.7,.5),new THREE.MeshLambertMaterial({color:0x35e0ff,emissive:0x0a5566})); door.position.set(0,1.35,4.9); base.add(door);
+  for(let i=0;i<5;i++){ const w=new THREE.Mesh(new THREE.BoxGeometry(.9,.5,.2),winMat); const a=-1.2+i*.6+3.14; w.position.set(Math.sin(a)*4.55,2.6,Math.cos(a)*4.55); w.rotation.y=a; base.add(w); }
+  const mkTube=(a,b,r)=>{ const v=new THREE.Vector3().subVectors(b,a), len=v.length(); const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,10),grey); m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize()); return cast(m); };
+  const modDefs=[{n:'A',x:-15,z:-3,ry:0},{n:'B',x:-6,z:-16,ry:Math.PI/2},{n:'C',x:13,z:-11,ry:.5}];
+  const modules=modDefs.map(md=>{ const g=new THREE.Group(); g.position.set(md.x,0,md.z); g.rotation.y=md.ry;
+    const body=cast(new THREE.Mesh(new THREE.CylinderGeometry(2.3,2.3,8,18),white)); body.rotation.z=Math.PI/2; body.position.y=2.5; g.add(body);
+    [-4,4].forEach(ex=>{ const cap=cast(new THREE.Mesh(new THREE.SphereGeometry(2.3,16,10),white)); cap.position.set(ex,2.5,0); g.add(cap); });
+    for(let i=0;i<4;i++){ const w=new THREE.Mesh(new THREE.BoxGeometry(.8,.5,.2),winMat); w.position.set(-2.4+i*1.6,3.3,2.25); g.add(w); }
+    const stripe=new THREE.Mesh(new THREE.CylinderGeometry(2.33,2.33,.5,18),new THREE.MeshLambertMaterial({color:0xff7a3d})); stripe.rotation.z=Math.PI/2; stripe.position.set(0,2.5,0); g.add(stripe);
+    base.add(g); const lb=label3d('MODULE '+md.n,'#35e0ff',5); lb.position.set(md.x,6.6,md.z); base.add(lb);
+    base.add(mkTube(new THREE.Vector3(0,1.2,0),new THREE.Vector3(md.x*.55,1.4,md.z*.55),.8));
+    return {id:'mod'+md.n,kind:'module',name:'Module '+md.n,pos:new THREE.Vector3(md.x,2.5,md.z),r:4.8,group:g,leak:false}; });
+  // solar array
+  const panels=[]; for(let i=0;i<6;i++){ const px=4+i*5.4, pz=-27; const g=new THREE.Group(); g.position.set(px,0,pz);
+    const pn=cast(new THREE.Mesh(new THREE.BoxGeometry(4.2,.15,2.6),new THREE.MeshLambertMaterial({color:0x2b4aa8,emissive:0x0a1a55}))); pn.position.y=1.9; pn.rotation.x=-.55; g.add(pn);
+    const pole=cast(new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,1.9,6),white)); pole.position.y=.95; g.add(pole);
+    const ind=new THREE.Mesh(new THREE.SphereGeometry(.14,8,8),new THREE.MeshBasicMaterial({color:0x3ddc97})); ind.position.set(0,.2,1); g.add(ind);
+    base.add(g); const lb=label3d('P'+(i+1),'#ffc53d',2.2); lb.position.set(px,3.9,pz); base.add(lb);
+    panels.push({id:'pan'+i,kind:'panel',name:'Panel P'+(i+1),pos:new THREE.Vector3(px,1.6,pz),r:3,group:g,panelMesh:pn,ind,bad:null}); }
+  // lander, rover, poles, crates
+  const lander=new THREE.Group(); const lb1=cast(new THREE.Mesh(new THREE.CylinderGeometry(2.4,3,5,14),white)); lb1.position.y=4; lander.add(lb1);
+  const lc=cast(new THREE.Mesh(new THREE.ConeGeometry(2.4,3.5,14),white)); lc.position.y=8.2; lander.add(lc);
+  for(let i=0;i<4;i++){ const a=i*Math.PI/2+.7; const leg=cast(new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,4.6,6),grey)); leg.position.set(Math.cos(a)*2.9,2,Math.sin(a)*2.9); leg.rotation.z=Math.cos(a)*.5; leg.rotation.x=-Math.sin(a)*.5; lander.add(leg); }
+  lander.position.set(-27,0,18); base.add(lander);
+  const rov=new THREE.Group(); const rb=cast(new THREE.Mesh(new THREE.BoxGeometry(3.4,1,2.1),new THREE.MeshLambertMaterial({color:0xe8edff}))); rb.position.y=1.2; rov.add(rb);
+  const rcab=cast(new THREE.Mesh(new THREE.BoxGeometry(1.4,.8,1.8),new THREE.MeshLambertMaterial({color:0x35e0ff,emissive:0x0a4455}))); rcab.position.set(.6,2,0); rov.add(rcab);
+  [[-1.3,-1],[1.3,-1],[-1.3,1],[1.3,1]].forEach(([wx,wz])=>{ const w=cast(new THREE.Mesh(new THREE.CylinderGeometry(.6,.6,.45,12),new THREE.MeshLambertMaterial({color:0x222222}))); w.rotation.x=Math.PI/2; w.position.set(wx,.6,wz*1.2); rov.add(w); });
+  rov.position.set(9,0,16); rov.rotation.y=.5; base.add(rov);
+  const dish=new THREE.Group(); const stem=cast(new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,3,6),white)); stem.position.y=1.5; dish.add(stem);
+  const bowl=cast(new THREE.Mesh(new THREE.SphereGeometry(1.3,14,8,0,Math.PI*2,0,Math.PI/2),white)); bowl.position.y=3.2; bowl.rotation.x=Math.PI*.75; dish.add(bowl);
+  dish.position.set(6,0,-6); base.add(dish);
+  const lampPos=[[20,18],[-20,22],[22,-4],[-24,-14],[0,30]];
+  lampPos.forEach(([lx,lz],i)=>{ const pole=cast(new THREE.Mesh(new THREE.CylinderGeometry(.1,.1,6,6),dark)); pole.position.set(lx,3,lz); base.add(pole);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(.35,8,8),new THREE.MeshBasicMaterial({color:0xfff2c0})); head.position.set(lx,6.2,lz); base.add(head);
+    if(i<2){ const pl=new THREE.PointLight(0xffe9b0,.8,26); pl.position.set(lx,6,lz); base.add(pl); } });
+  const pad=new THREE.Mesh(new THREE.RingGeometry(5,6.4,36),new THREE.MeshBasicMaterial({color:0xffc53d,side:THREE.DoubleSide})); pad.rotation.x=-Math.PI/2; pad.position.set(0,.05,31); base.add(pad);
+  base.children.forEach(o=>{ if(o.isMesh||o.isGroup){} });
+  // base y placement (flat area)
+  base.position.y=0;
+  // ----- samples & beacons -----
   const facts=EVAFACTS[wk]; const items=[]; const N=facts.length+3;
   for(let i=0;i<N;i++){
     const quiz=i>=facts.length, f=quiz?null:facts[i], type=quiz?'quiz':f.t;
-    const a=rng()*6.283, r=20+rng()*80, x=Math.cos(a)*r, z=Math.sin(a)*r, y=hgt(x,z);
+    const a=rng()*6.283, r=42+rng()*58, x=Math.cos(a)*r, z=Math.sin(a)*r, y=hgt(x,z);
     const colr=new THREE.Color(EVACOL[type]);
     const mesh=new THREE.Mesh(quiz?new THREE.OctahedronGeometry(.7):new THREE.IcosahedronGeometry(.55,0),new THREE.MeshStandardMaterial({color:colr,emissive:colr,emissiveIntensity:.8,flatShading:true}));
     mesh.position.set(x,y+1.1,z); scene.add(mesh);
@@ -1465,53 +1550,237 @@ function startEVA(wk, mission){
   }
   // peers
   const avatars=new Map();
-  function makeAvatar(name,color){
+  function makeAvatar(name,color,down){
     const g=new THREE.Group(); const c=new THREE.Color(safeColor(color));
-    const body=new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,1.1,10),new THREE.MeshLambertMaterial({color:0xf2f4ff})); body.position.y=.9; g.add(body);
-    const pack=new THREE.Mesh(new THREE.BoxGeometry(.5,.8,.25),new THREE.MeshLambertMaterial({color:c})); pack.position.set(0,1,-.35); g.add(pack);
-    const head=new THREE.Mesh(new THREE.SphereGeometry(.32,12,10),new THREE.MeshLambertMaterial({color:0xf2f4ff})); head.position.y=1.7; g.add(head);
+    const body=cast(new THREE.Mesh(new THREE.CylinderGeometry(.35,.35,1.1,10),new THREE.MeshLambertMaterial({color:0xf2f4ff}))); body.position.y=.9; g.add(body);
+    const pack=cast(new THREE.Mesh(new THREE.BoxGeometry(.5,.8,.25),new THREE.MeshLambertMaterial({color:c}))); pack.position.set(0,1,-.35); g.add(pack);
+    const head=cast(new THREE.Mesh(new THREE.SphereGeometry(.32,12,10),new THREE.MeshLambertMaterial({color:0xf2f4ff}))); head.position.y=1.7; g.add(head);
     const vis=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),new THREE.MeshBasicMaterial({color:c})); vis.position.set(0,1.72,.18); g.add(vis);
-    const legs=new THREE.Mesh(new THREE.BoxGeometry(.5,.4,.3),new THREE.MeshLambertMaterial({color:0xdde3ff})); legs.position.y=.2; g.add(legs);
-    const cc=document.createElement('canvas'); cc.width=256; cc.height=64; const x=cc.getContext('2d'); x.font='bold 30px sans-serif'; x.textAlign='center'; x.fillStyle='rgba(5,8,22,.7)'; x.fillRect(0,8,256,48); x.fillStyle=safeColor(color); x.fillText(String(name||'Astronaut').slice(0,16),128,44);
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cc),fog:false,depthTest:false})); sp.scale.set(3,.75,1); sp.position.y=2.6; g.add(sp);
+    const legs=cast(new THREE.Mesh(new THREE.BoxGeometry(.5,.4,.3),new THREE.MeshLambertMaterial({color:0xdde3ff}))); legs.position.y=.2; g.add(legs);
+    const sp=label3d(String(name||'Astronaut').slice(0,16),safeColor(color),3); sp.position.y=2.6; g.add(sp);
     scene.add(g); return g;
   }
-  E={wk,d,mission:!!mission,ew,items,team:0,renderer,scene,camera,hab,hgt,grav,
-     px:0,pz:14,py:0,vy:0,yaw:0,sky,pitch:0,o2:100,dose:0,paused:false,done:false,
+  // leak plume particles
+  const PL=60, plPos=new Float32Array(PL*3), plVel=new Float32Array(PL*3), plAge=new Float32Array(PL);
+  const plGeo=new THREE.BufferGeometry(); plGeo.setAttribute('position',new THREE.BufferAttribute(plPos,3));
+  const plume=new THREE.Points(plGeo,new THREE.PointsMaterial({color:0xffffff,size:.45,transparent:true,opacity:.75,fog:false})); plume.visible=false; plume.frustumCulled=false; scene.add(plume);
+  // storm dust particles
+  const DN=260, dPos=new Float32Array(DN*3); for(let i=0;i<DN;i++){ dPos[i*3]=rng()*80-40; dPos[i*3+1]=rng()*14; dPos[i*3+2]=rng()*80-40; }
+  const dGeo=new THREE.BufferGeometry(); dGeo.setAttribute('position',new THREE.BufferAttribute(dPos,3));
+  const dust=new THREE.Points(dGeo,new THREE.PointsMaterial({color:0xe0a070,size:.35,transparent:true,opacity:.7})); dust.visible=false; dust.frustumCulled=false; scene.add(dust);
+  // waypoint
+  const wp=iconSprite('📍'); wp.visible=false; scene.add(wp);
+  // crew NPC (created on demand), shelter extras
+  const boulder=new THREE.Mesh(new THREE.DodecahedronGeometry(2.4,0),rockMat); boulder.position.set(-34,hgt(-34,-30)+1,-30); boulder.castShadow=true; scene.add(boulder);
+
+  E={wk,d,mission:!!mission,ew,items,team:0,renderer,scene,camera,hgt,grav,sky,sun,amb,winMat,
+     px:0,pz:20,py:0,vy:0,yaw:0,pitch:0,o2:100,dose:0,paused:false,done:false,
      keys:{},joy:{x:0,y:0},collected:[],quizRight:0,quizTotal:0,last:performance.now(),hudT:0,presT:0,cardT:0,avatars,makeAvatar,resize,
-     elapsed:0,lock:false};
+     elapsed:0,lock:false,
+     modules,panels,rov,boulder,plume,plPos,plVel,plAge,PL,dust,dPos,wp,P,
+     solids:[{x:0,z:0,r:6.2},{x:-15,z:-3,r:3.6},{x:-6,z:-16,r:3.6},{x:13,z:-11,r:3.6},{x:-27,z:18,r:3.8},{x:9,z:16,r:2.4}],
+     score:0,integ:100,power:100,em:null,emN:0,queue:[...EMSETS[wk]].sort(()=>erng()-.5),nextAt:35,solved:0,failed:0,missed:0,fixedIdx:new Set(),history:[],erng,
+     scan:null,work:null,carry:0,deposited:0,crates:[],lessons:[],shake:0,fogBase:P.fogD,crew:null,flareDose:0};
   bindEvaInput();
   if(window.matchMedia&&matchMedia('(pointer:coarse)').matches) wrap.classList.add('touch'); else wrap.classList.remove('touch');
-  evaToast(`🥽 <b>EVA on ${esc(d.name)}</b>: find the glowing markers. Gravity here is only <b>${grav} m/s²</b> — try jumping!`);
+  evaToast(`🥽 <b>Shift start on ${esc(d.name)}</b>. Keep the base alive: when an emergency strikes, <b>scan (F)</b> to identify the problem, then <b>use (E)</b> to fix it. Collect samples in between!`);
   E.raf=requestAnimationFrame(evaFrame);
 }
 
 function bindEvaInput(){
   const kd=e=>{ if(!E||E.done) return; const k=e.key.toLowerCase();
     if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
-    E.keys[k]=true; if(k==='e') evaFinish('manual'); };
+    if(E.keys[k]) return; E.keys[k]=true;
+    if(E.paused) return;
+    if(k==='f') evaScan(); else if(k==='e') evaUse(); else if(k==='q') evaHint(); else if(k==='h') evaFinish('manual'); };
   const ku=e=>{ if(E) E.keys[e.key.toLowerCase()]=false; };
   const mm=e=>{ if(!E||E.paused||!E.lock) return; E.yaw-=e.movementX*.0024; E.pitch=clamp(E.pitch-e.movementY*.0024,-1.4,1.4); };
   const pl=()=>{ if(E) E.lock=(document.pointerLockElement===$('#evaC')); };
   const click=()=>{ if(E&&!E.paused&&!E.done&&!E.lock){ try{ const r=$('#evaC').requestPointerLock(); if(r&&r.catch) r.catch(()=>{}); }catch(e){} } };
   addEventListener('keydown',kd); addEventListener('keyup',ku); addEventListener('mousemove',mm);
   document.addEventListener('pointerlockchange',pl); $('#evaC').addEventListener('click',click);
-  // touch controls
   let joyId=null,jx0=0,jy0=0, lookId=null,lx=0,ly=0;
   const joy=$('#joy'),knob=$('#joyK'),look=$('#lookZ'),jump=$('#jumpB');
-  const jd=e=>{ e.preventDefault(); joyId=e.pointerId; const r=joy.getBoundingClientRect(); jx0=r.left+r.width/2; jy0=r.top+r.height/2; jm(e); try{joy.setPointerCapture(e.pointerId)}catch(_){} };
   const jm=e=>{ if(e.pointerId!==joyId||!E) return; let dx=(e.clientX-jx0)/50,dy=(e.clientY-jy0)/50; const m=Math.hypot(dx,dy); if(m>1){dx/=m;dy/=m;} E.joy.x=dx; E.joy.y=dy; knob.style.left=(40+dx*40)+'px'; knob.style.top=(40+dy*40)+'px'; };
+  const jd=e=>{ e.preventDefault(); joyId=e.pointerId; const r=joy.getBoundingClientRect(); jx0=r.left+r.width/2; jy0=r.top+r.height/2; jm(e); try{joy.setPointerCapture(e.pointerId)}catch(_){} };
   const ju=e=>{ if(e.pointerId!==joyId) return; joyId=null; if(E){E.joy.x=0;E.joy.y=0;} knob.style.left='40px'; knob.style.top='40px'; };
   joy.addEventListener('pointerdown',jd); joy.addEventListener('pointermove',jm); joy.addEventListener('pointerup',ju); joy.addEventListener('pointercancel',ju);
   look.addEventListener('pointerdown',e=>{ e.preventDefault(); lookId=e.pointerId; lx=e.clientX; ly=e.clientY; try{look.setPointerCapture(e.pointerId)}catch(_){} });
   look.addEventListener('pointermove',e=>{ if(e.pointerId!==lookId||!E||E.paused) return; E.yaw-=(e.clientX-lx)*.005; E.pitch=clamp(E.pitch-(e.clientY-ly)*.005,-1.4,1.4); lx=e.clientX; ly=e.clientY; });
   const lu=e=>{ if(e.pointerId===lookId) lookId=null; }; look.addEventListener('pointerup',lu); look.addEventListener('pointercancel',lu);
   jump.addEventListener('pointerdown',e=>{ e.preventDefault(); if(E) E.keys[' ']=true; }); jump.addEventListener('pointerup',()=>{ if(E) E.keys[' ']=false; });
+  $('#bScan').onclick=()=>{ if(E&&!E.paused) evaScan(); }; $('#bUse').onclick=()=>{ if(E&&!E.paused) evaUse(); }; $('#bRadio').onclick=()=>{ if(E&&!E.paused) evaHint(); };
   E.unbind=()=>{ removeEventListener('keydown',kd); removeEventListener('keyup',ku); removeEventListener('mousemove',mm); document.removeEventListener('pointerlockchange',pl); $('#evaC').removeEventListener('click',click);
-    // replace touch nodes to drop their listeners
     ['#joy','#lookZ','#jumpB'].forEach(sel=>{ const n=$(sel); n.replaceWith(n.cloneNode(true)); }); $('#joyK').style.left='40px'; $('#joyK').style.top='40px'; };
 }
 
+/* ---- scanner & interaction ---- */
+function evaTargets(){
+  const t=[...E.modules,...E.panels]; if(E.crew) t.push(E.crew); return t;
+}
+function evaCamDir(){ const cp=Math.cos(E.pitch); return new THREE.Vector3(-Math.sin(E.yaw)*cp,Math.sin(E.pitch),-Math.cos(E.yaw)*cp); }
+function evaFindTarget(maxD,cone){
+  const cp=E.camera.position, f=evaCamDir(); let best=null,bs=-1;
+  for(const t of evaTargets()){ const v=new THREE.Vector3().subVectors(t.pos,cp), dist=v.length()-t.r*.6; if(dist>maxD) continue;
+    const dot=v.normalize().dot(f); const need=dist<8?Math.min(cone,.6):cone; if(dot<need) continue;
+    const sc=dot-dist*.004; if(sc>bs){bs=sc;best=t;} }
+  return best;
+}
+function scanText(t){
+  const em=E.em;
+  if(t.kind==='module'){
+    const leaking=em&&em.type==='leak'&&!em.solved&&t.leak;
+    const p=leaking?64:101;
+    return {text:`📟 <b>${t.name}</b>: pressure <b>${leaking?p+' kPa ▼ falling':'101 kPa ✓'}</b> (normal 101) · temp ${leaking?'−4 °C, cooling':'21 °C'} · ${leaking?'<span style="color:var(--bad)">ANOMALY: air escaping</span>':'nominal'}`,anomaly:leaking};
+  }
+  if(t.kind==='panel'){
+    const bad=em&&em.type==='power'&&!em.solved&&t.bad;
+    if(!bad) return {text:`📟 <b>${t.name}</b>: output <b>4.2 kW ✓</b> · current 18.1 A · surface clean · nominal`,anomaly:false};
+    const c=t.bad;
+    const txt={dust:`output <b>0.6 kW ▼</b> · voltage normal · current normal but tiny · surface transmittance <b>14%</b> (heavy dust layer)`,
+               cable:`output <b>0 kW ▼</b> · panel voltage normal (36 V) · <b>no current at connector J2</b> · surface clean`,
+               crack:`output <b>1.1 kW ▼</b> · cell 3 reverse-biased, hot spot · <b>visible fracture across the glass</b> · surface otherwise clean`}[c];
+    return {text:`📟 <b>${t.name}</b>: ${txt}<br><span style="color:var(--bad)">ANOMALY: this panel is faulty</span>`,anomaly:true};
+  }
+  if(t.kind==='crew'){
+    const c=t.cond;
+    const txt={hypoxia:`SpO₂ <b>74% ▼</b> · breathing fast &amp; shallow · confused, slurred speech · suit O₂ gauge: <b>EMPTY</b> · skin pale/blue lips`,
+               heat:`core temperature <b>39.8 °C ▲</b> · skin hot and flushed · <b>stopped sweating</b> · suit cooling loop: <b>FAILED</b> · SpO₂ 97%`}[c];
+    return {text:`📟 <b>${t.name}</b>: ${txt}`,anomaly:true};
+  }
+  return {text:'',anomaly:false};
+}
+function evaScan(){
+  if(!E||E.done) return;
+  const t=evaFindTarget(34,.93);
+  if(!t){ evaToast('🔎 Nothing in range. Face a module, panel or crewmate (within about 30 m) and press <b>F</b>.'); beep(300,.1); return; }
+  const r=scanText(t); beep(1000,.08,'triangle'); evaToast(r.text);
+  E.scan={id:t.id,at:E.elapsed};
+  const em=E.em;
+  if(em&&!em.solved&&r.anomaly&&!em.identified){
+    if((em.type==='leak'&&t.kind==='module')||(em.type==='power'&&t.kind==='panel')||(em.type==='medical'&&t.kind==='crew')){
+      em.identified=true; em.stage='tool'; addScore(60,'problem identified'); radio(em.type==='leak'?`Confirmed: ${t.name} is leaking. Get to it and press <b>E</b> to choose a repair.`:em.type==='power'?`Confirmed: ${t.name} is the faulty panel. Press <b>E</b> next to it and pick the right fix.`:`Vitals logged. Press <b>E</b> next to your crewmate and give the right first aid.`);
+    }
+  } else if(em&&!em.solved&&!r.anomaly&&((em.type==='leak'&&t.kind==='module')||(em.type==='power'&&t.kind==='panel'))){
+    E.scanned=(E.scanned||new Set()); E.scanned.add(t.id);
+  }
+}
+function evaUse(){
+  if(!E||E.done||E.work) return;
+  const t=evaFindTarget(16,.5); const em=E.em;
+  if(!t){ evaToast('🛠 Nothing to use here. Walk up to a module, panel or crewmate and press <b>E</b>.'); return; }
+  const dist=E.camera.position.distanceTo(t.pos)-t.r*.6;
+  if(dist>5.5){ evaToast(`🛠 Get closer to <b>${t.name}</b> to work on it.`); return; }
+  if(!em||em.solved||!['leak','power','medical'].includes(em.type)){ evaToast(`✅ ${t.name}: nothing wrong here.`); return; }
+  const relevant=(em.type==='leak'&&t.kind==='module'&&t.leak)||(em.type==='power'&&t.kind==='panel'&&t.bad)||(em.type==='medical'&&t.kind==='crew');
+  if(!relevant){ evaToast(`🛠 <b>${t.name}</b> looks fine. Use the scanner (F) to find the real problem.`); addScore(-10,'wasted time'); em.limitLeft=Math.max(5,em.limitLeft-4); return; }
+  if(!em.identified){ evaToast('🔎 You do not know what is wrong yet. <b>Scan it (F)</b> first to diagnose the problem.'); return; }
+  openTools(t);
+}
+function toolsFor(em,t){
+  if(em.type==='leak') return [
+    {n:'Apply a rigid patch and sealant over the breach',ok:true,why:'Correct. A patch plus sealant is the standard emergency fix for a small puncture; then the module is re-pressurized and checked.'},
+    {n:'Pump in extra oxygen and keep working',ok:false,why:'Adding air only delays the problem: it escapes as fast as you add it, and you waste your oxygen supply.'},
+    {n:'Cover the hole with ordinary duct tape',ok:false,why:'Ordinary tape cannot hold a pressure difference for long and fails in extreme cold. You need a rated patch.'},
+    {n:'Open the airlock to equalize the pressure',ok:false,why:'Opening an airlock to vacuum would vent MORE air. Never do that.'}];
+  if(em.type==='power'){ const c=t.bad; return [
+    {n:'Brush and blow the dust off the panel',ok:c==='dust',why:c==='dust'?'Correct. Heavy dust blocked sunlight (14% transmittance). Cleaning restores output.':'Dust is not the problem here. Re-read the scan: the surface was not dusty.'},
+    {n:'Reconnect the cable at connector J2',ok:c==='cable',why:c==='cable'?'Correct. The panel made normal voltage but no current flowed: a disconnected cable.':'The cable is fine. Re-read the scan: current was still flowing.'},
+    {n:'Swap in a spare panel',ok:c==='crack',why:c==='crack'?'Correct. A fractured panel with a hot spot cannot be cleaned or reconnected: it must be replaced.':'This panel is not broken. Replacing it would waste time and spares.'},
+    {n:'Restart the habitat computer',ok:false,why:'A reboot cannot fix a physical fault in a panel or cable.'}]; }
+  if(em.type==='medical'){ const c=t.cond; return [
+    {n:'Connect a spare oxygen line to their suit',ok:c==='hypoxia',why:c==='hypoxia'?'Correct. Empty suit oxygen + blue lips + confusion = hypoxia. Restoring oxygen is the fix.':'Their oxygen is fine (SpO₂ 97%). The real problem is overheating.'},
+    {n:'Move them to shade, restore cooling and give water',ok:c==='heat',why:c==='heat'?'Correct. A failed cooling loop and 39.8 °C means heat exhaustion: cool them down.':'They are not overheating. Their oxygen is the problem.'},
+    {n:'Take off their helmet so they can breathe',ok:false,severe:true,why:'DANGEROUS! Never open a helmet outside: you would lose pressure and air instantly.'},
+    {n:'Give them pain medication and wait',ok:false,why:'Medication does not treat low oxygen or overheating. Find the actual cause.'}]; }
+  return [];
+}
+function openTools(t){
+  const em=E.em, tools=shuffle(toolsFor(em,t));
+  E.paused=true; if(document.pointerLockElement) document.exitPointerLock();
+  const ov=$('#evaOv'); ov.classList.remove('hidden'); E.curTools={tools,t};
+  ov.innerHTML=`<div class="card" style="border-color:var(--warn)"><h2>${EMERG[em.type].icon} ${esc(EMERG[em.type].title)}</h2>
+    <p class="sub">${scanText(t).text}</p><p><b>Choose the correct action:</b></p>
+    <div class="choices">${tools.map((o,i)=>`<button onclick="evaTool(${i})">${esc(o.n)}</button>`).join('')}</div>
+    <button style="margin-top:10px" onclick="evaResume()">◀ Back (keep investigating)</button></div>`;
+}
+function evaTool(i){
+  const {tools,t}=E.curTools, o=tools[i], em=E.em; em.tries++;
+  if(o.ok){
+    $('#evaOv').innerHTML=`<div class="card" style="border-color:var(--good)"><h2>✅ Correct choice</h2><p>${esc(o.why)}</p><button class="primary" onclick="evaStartWork()">Start the work ▶</button></div>`;
+    E.pendingWork=t; beep(900,.15,'triangle');
+  } else {
+    addScore(o.severe?-100:-50,'wrong action'); em.limitLeft=Math.max(5,em.limitLeft-(o.severe?20:10)); E.mistakes=(E.mistakes||0)+1; beep(200,.3,'sawtooth');
+    $('#evaOv').innerHTML=`<div class="card" style="border-color:var(--bad)"><h2>❌ That will not work</h2><p>${esc(o.why)}</p><p class="sub">You lost time. Try another option.</p><button class="primary" onclick="openTools(E.curTools.t)">Choose again ▶</button></div>`;
+  }
+}
+function evaStartWork(){
+  const t=E.pendingWork; $('#evaOv').classList.add('hidden'); E.paused=false; E.last=performance.now();
+  E.work={t,p:0,need:E.em.type==='medical'?3.5:4}; evaToast(`🛠 Working on <b>${esc(t.name)}</b>… stay close!`);
+}
+function evaHint(){
+  const em=E.em; if(!em||em.solved){ radio('No active emergency. Collect samples, or explore with F to scan equipment!'); return; }
+  const h=EMERG[em.type].hint, txt=(em.stage==='tool'||em.identified)?h.tool:h.find;
+  addScore(-25,'radio hint'); radio(txt||h.find);
+}
+
+/* ---- emergencies ---- */
+function startEmergency(type){
+  const idx=E.emN++;
+  if(E.fixedIdx.has(idx)){ E.solved++; E.history.push({type,res:'team'}); E.lessons.push(EMERG[type].lesson); radio('Your crew already handled one emergency without you. Nice teamwork!'); E.nextAt=E.elapsed+15; return; }
+  const d=EMERG[type], er=E.erng;
+  const em={type,idx,stage:'find',identified:false,solved:false,tries:0,start:E.elapsed,limit:d.limit,limitLeft:d.limit,data:{}};
+  E.em=em;
+  if(type==='leak'){ const k=Math.floor(er()*3); E.modules.forEach((m,i)=>m.leak=(i===k)); em.target=E.modules[k]; E.plume.visible=true; for(let i=0;i<E.PL;i++) E.plAge[i]=Math.random(); }
+  if(type==='power'){ const k=Math.floor(er()*6); const cause=['dust','cable','crack'][Math.floor(er()*3)]; E.panels.forEach((p,i)=>p.bad=(i===k?cause:null)); em.target=E.panels[k]; E.panels[k].ind.material.color.set(0x3ddc97); }
+  if(type==='medical'){ const a=er()*6.283, r=48+er()*14, x=Math.cos(a)*r, z=Math.sin(a)*r, cond=er()<.5?'hypoxia':'heat';
+    const av=E.makeAvatar('Dr. Okafor','hsl(10,80%,60%)'); av.position.set(x,E.hgt(x,z)+.4,z); av.rotation.z=Math.PI/2; av.children.forEach(c=>{ if(c.isSprite) c.position.set(0,2.6,0); });
+    E.crew={id:'crew',kind:'crew',name:'Dr. Okafor',pos:new THREE.Vector3(x,E.hgt(x,z)+.6,z),r:1.6,cond,avatar:av}; em.target=E.crew; E.solids.push({x,z,r:1.2}); }
+  if(type==='flare'){ em.data={phase:'choose',arrive:E.elapsed+d.limit,shelter:null}; E.paused=true; if(document.pointerLockElement) document.exitPointerLock();
+    $('#evaOv').classList.remove('hidden'); $('#evaOv').innerHTML=`<div class="card" style="border-color:var(--bad)"><h2>☢️ SOLAR FLARE WARNING</h2><p>A burst of radiation arrives in <b>${d.limit} seconds</b>. Where do you shelter? Choose fast.</p>
+      <div class="choices"><button onclick="evaShelter('hab')">🏠 The habitat's water-lined storm cell</button><button onclick="evaShelter('rover')">🚙 Inside the rover</button><button onclick="evaShelter('rock')">🪨 Behind the big boulder</button></div></div>`; }
+  if(type==='dust'){ em.data={arrive:E.elapsed+d.limit,phase:'gather',n:0}; E.carry=0; E.deposited=0;
+    for(let i=0;i<3;i++){ const a=er()*6.283, r=18+er()*18, x=Math.cos(a)*r, z=Math.sin(a)*r; const m=new THREE.Mesh(new THREE.BoxGeometry(1.1,.9,1.1),new THREE.MeshStandardMaterial({color:0xffc53d,emissive:0x6a4a00,emissiveIntensity:.8})); m.position.set(x,E.hgt(x,z)+.5,z); m.castShadow=true; E.scene.add(m); E.crates.push({m,x,z,got:false,dep:false}); }
+    E.dust.visible=true; }
+  radio(`<b>${d.icon} ${d.title}</b>. ${type==='leak'?'Alarm! A module is losing air. 1) Scan modules with <b>F</b> to find the leak. 2) Press <b>E</b> next to it and choose the repair.':type==='power'?'Habitat power is dropping. 1) Scan the six solar panels with <b>F</b> and read the symptoms. 2) Press <b>E</b> next to the faulty panel and choose the right fix.':type==='medical'?'Your crewmate collapsed outside! Follow the marker, scan vitals with <b>F</b>, then press <b>E</b> to treat them.':type==='dust'?'A dust front is approaching. Grab the 3 loose crates and bring them to the habitat.':'Choose your shelter!'}`);
+  E.banner=EMERG[type].icon+' '+d.title;
+}
+function evaShelter(k){
+  const em=E.em; em.data.shelter=k; em.data.phase='run'; em.data.mult={hab:.04,rover:.5,rock:.85}[k];
+  const why={hab:'Water and dense equipment block radiation. Smart choice!',rover:'A rover gives partial shielding, but it is thin metal. Better than nothing.',rock:'A boulder only blocks particles from one direction. Poor shelter!'}[k];
+  $('#evaOv').classList.add('hidden'); E.paused=false; E.last=performance.now(); radio(`${why} Now get there before the flare arrives!`);
+  em.target={pos:k==='hab'?new THREE.Vector3(0,2,2):k==='rover'?E.rov.position.clone().setY(1.5):E.boulder.position.clone(),r:k==='hab'?6.5:k==='rover'?3.4:3.6};
+}
+function solveEmergency(by){
+  const em=E.em; if(!em||em.solved) return; em.solved=true; E.solved++;
+  const bonus=300+Math.round(em.limitLeft*2)-(em.tries>1?(em.tries-1)*30:0); addScore(bonus,'EMERGENCY SOLVED');
+  E.history.push({type:em.type,res:by||'solved',score:bonus}); E.lessons.push(EMERG[em.type].lesson);
+  if(MP.room) MP.room.emit('fix',{ew:E.ew,idx:em.idx,who:MP.name}).catch(()=>{});
+  clearEmergencyVisuals(em); radio(`Excellent work! <b>${EMERG[em.type].title}</b> resolved. ${by==='team'?'Your crewmate got it first.':''}`); beep(1000,.25,'triangle');
+  E.em=null; E.banner=''; E.nextAt=E.elapsed+22; E.work=null;
+}
+function failEmergency(reason){
+  const em=E.em; if(!em||em.solved) return; E.failed++;
+  const loss={leak:35,power:25,medical:20,flare:0,dust:18}[em.type]; E.integ=clamp(E.integ-loss); addScore(-150,'EMERGENCY FAILED');
+  E.history.push({type:em.type,res:'failed'}); E.lessons.push(EMERG[em.type].lesson);
+  const how={leak:'The crew sealed it with emergency foam, but the module lost most of its air.',power:'Backup batteries took over, but the base is on emergency power.',medical:'A rescue team dragged them in, but treatment was delayed.',flare:'',dust:'Loose equipment was damaged by the storm.'}[em.type];
+  clearEmergencyVisuals(em); radio(`⚠ Time ran out. ${how} Review the lesson in your shift report.`); beep(150,.5,'sawtooth');
+  if(em.type==='medical') E.hurt=(E.hurt||0)+1;
+  E.em=null; E.banner=''; E.nextAt=E.elapsed+22; E.work=null; E.shake=.8;
+}
+function clearEmergencyVisuals(em){
+  E.plume.visible=false; E.modules.forEach(m=>m.leak=false); E.panels.forEach(p=>{p.bad=null;});
+  if(em.type==='medical'&&E.crew){ E.crew.avatar.rotation.z=0; E.crew.avatar.position.y=E.hgt(E.crew.avatar.position.x,E.crew.avatar.position.z); setTimeout(()=>{ if(E&&E.crew){ E.scene.remove(E.crew.avatar); E.crew=null; } },3500); }
+  if(em.type==='dust'){ E.crates.forEach(c=>E.scene.remove(c.m)); E.crates=[]; E.dust.visible=false; E.scene.fog.density=E.fogBase; }
+  E.winMat.color.set(0xffe9a0); E.scene.fog.density=E.fogBase; $('#evaFlash').style.opacity=0;
+}
+function onFix(m){
+  if(!E||m.sameTab||!m.data||m.data.ew!==E.ew) return; const idx=m.data.idx|0;
+  if(E.em&&E.em.idx===idx&&!E.em.solved){ evaToast(`👥 ${esc(String(m.data.who||'A crewmate').slice(0,16))} fixed the emergency!`); solveEmergency('team'); }
+  else if(idx>=E.emN) E.fixedIdx.add(idx);
+}
+
+/* ---- main loop ---- */
 function evaFrame(t){
   if(!E) return; E.raf=requestAnimationFrame(evaFrame);
   const dt=Math.min(.05,(t-E.last)/1000); E.last=t;
@@ -1520,33 +1789,48 @@ function evaFrame(t){
 }
 function evaUpdate(dt,t){
   const K=E.keys; E.elapsed+=dt;
+  // movement
   let fx=(K['w']||K['arrowup']?1:0)-(K['s']||K['arrowdown']?1:0)-E.joy.y;
   let sx=(K['d']?1:0)-(K['a']?1:0)+E.joy.x;
   if(K['arrowleft']) E.yaw+=1.8*dt; if(K['arrowright']) E.yaw-=1.8*dt;
   const m=Math.hypot(fx,sx); if(m>1){fx/=m;sx/=m;}
-  const sp=(K['shift']?7.5:4.6);
+  const sp=(K['shift']?8:4.8);
   const sinY=Math.sin(E.yaw), cosY=Math.cos(E.yaw);
   let nx=E.px+(-sinY*fx+cosY*sx)*sp*dt, nz=E.pz+(-cosY*fx-sinY*sx)*sp*dt;
-  const r=Math.hypot(nx,nz); if(r>112){ nx*=112/r; nz*=112/r; }
-  if(r<6.2){ const k=6.2/Math.max(r,.01); nx*=k; nz*=k; }
+  const r=Math.hypot(nx,nz); if(r>118){ nx*=118/r; nz*=118/r; }
+  for(const s of E.solids){ const dx=nx-s.x, dz=nz-s.z, dd=Math.hypot(dx,dz); if(dd<s.r){ const k=s.r/Math.max(dd,.01); nx=s.x+dx*k; nz=s.z+dz*k; } }
   E.px=nx; E.pz=nz;
-  // low-gravity jumping: same take-off speed, different gravity
-  const g=E.grav;
-  if(K[' ']&&E.py<=.001){ E.vy=4.4; }
+  const g=E.grav; if(K[' ']&&E.py<=.001){ E.vy=4.4; }
   E.vy-=g*dt; E.py+=E.vy*dt; if(E.py<0){ E.py=0; E.vy=0; }
   const gy=E.hgt(E.px,E.pz), bob=(m>0&&E.py<.05)?Math.sin(t/140)*.04:0;
-  E.camera.position.set(E.px,gy+E.py+1.7+bob,E.pz); E.camera.rotation.set(E.pitch,E.yaw,0);
-  // sky follows camera so it feels infinitely far
+  const shk=E.shake>0?(Math.random()-.5)*E.shake*.15:0; E.shake=Math.max(0,E.shake-dt);
+  E.camera.position.set(E.px+shk,gy+E.py+1.7+bob,E.pz); E.camera.rotation.set(E.pitch,E.yaw,0);
   E.sky.position.copy(E.camera.position);
-  // suit oxygen & radiation
-  const near=Math.hypot(E.px,E.pz)<9;
-  E.o2=clamp(E.o2+(near?20:-.58)*dt);
-  if(E.wk==='europa'&&!near) E.dose+=dt*.7;
-  // collectibles
+  // suit oxygen
+  const near=Math.hypot(E.px,E.pz)<8;
+  E.o2=clamp(E.o2+(near?20:-.5)*dt);
+  if(E.wk==='europa'&&!near) E.dose+=dt*.45;
+  // sample pickups
   for(const it of E.items){ if(it.got) continue;
     it.mesh.rotation.y+=dt*1.6; it.mesh.position.y=it.y+1.3+Math.sin(t/400+it.i)*.25;
     if(Math.hypot(E.px-it.x,E.pz-it.z)<2.4 && Math.abs(gy+E.py-it.y)<4) evaCollect(it); }
-  // multiplayer
+  // emergency scheduling
+  if(!E.em && E.queue.length && E.elapsed>=E.nextAt) startEmergency(E.queue.shift());
+  if(!E.em && !E.queue.length && !E.endAt) E.endAt=E.elapsed+10;
+  if(E.endAt&&E.elapsed>=E.endAt&&!E.em) { evaFinish('complete'); return; }
+  const em=E.em; if(em) emUpdate(em,dt,t);
+  // repair work
+  if(E.work){ const w=E.work, d=E.camera.position.distanceTo(w.t.pos)-w.t.r*.6;
+    if(d<6){ w.p+=dt; } else { w.p=Math.max(0,w.p-dt*.5); }
+    $('#evaPrompt').innerHTML=`<div class="hb" style="min-width:260px"><b>${d<6?'🛠 REPAIRING':'⚠ GET CLOSER'}</b> ${esc(w.t.name)}<div class="track"><div class="fill" style="width:${Math.min(100,w.p/w.need*100)}%;background:var(--accent)"></div></div></div>`;
+    if(w.p>=w.need){ E.work=null; $('#evaPrompt').innerHTML=''; solveEmergency('solved'); } }
+  else evaPrompt();
+  // lights / power visuals
+  const powerFail=em&&em.type==='power'&&!em.solved;
+  E.power=clamp(E.power+(powerFail?-6:10)*dt);
+  E.winMat.color.set(powerFail?(Math.random()<.18?0xffe9a0:(E.power<50?0x1a1a2a:0xb8955a)):0xffe9a0);
+  E.amb.intensity=1.1-(powerFail?.15:0);
+  // multiplayer avatars
   if(MP.room){
     E.presT+=dt;
     if(E.presT>.12){ E.presT=0; mpPresence({mode:'eva',ew:E.ew,ex:+E.px.toFixed(2),ey:+(gy+E.py).toFixed(2),ez:+E.pz.toFixed(2),eyaw:+E.yaw.toFixed(2),name:MP.name,color:MP.color,world:E.wk,sci:null,hp:null,day:null,low:null,lowv:null}); }
@@ -1557,27 +1841,116 @@ function evaUpdate(dt,t){
       av.position.x+=(pr.ex-av.position.x)*Math.min(1,dt*10); av.position.z+=(pr.ez-av.position.z)*Math.min(1,dt*10); av.position.y+=(pr.ey-av.position.y)*Math.min(1,dt*10); av.rotation.y=(Number(pr.eyaw)||0)+Math.PI; }
     for(const [id,av] of E.avatars) if(!seen.has(id)){ E.scene.remove(av); E.avatars.delete(id); }
   }
+  // particles
+  if(E.plume.visible&&em&&em.target){ const o=em.target.pos; for(let i=0;i<E.PL;i++){ E.plAge[i]+=dt*.9; if(E.plAge[i]>1){ E.plAge[i]=0; E.plPos[i*3]=o.x+Math.random()*.8-.4; E.plPos[i*3+1]=o.y+1.2; E.plPos[i*3+2]=o.z+2.3; E.plVel[i*3]=(Math.random()-.5)*2; E.plVel[i*3+1]=Math.random()*3+1; E.plVel[i*3+2]=Math.random()*5+2; }
+      E.plPos[i*3]+=E.plVel[i*3]*dt; E.plPos[i*3+1]+=E.plVel[i*3+1]*dt; E.plPos[i*3+2]+=E.plVel[i*3+2]*dt; } E.plume.geometry.attributes.position.needsUpdate=true; }
+  if(E.dust.visible){ const arr=E.dPos, cp=E.camera.position, k=em&&em.type==='dust'?Math.max(0,1-(em.data.arrive-E.elapsed)/60):0; E.dust.material.opacity=.15+.7*k;
+    for(let i=0;i<arr.length/3;i++){ arr[i*3]-=dt*(3+k*14); if(arr[i*3]<cp.x-40) arr[i*3]+=80; if(arr[i*3]>cp.x+40) arr[i*3]-=80; if(Math.abs(arr[i*3+2]-cp.z)>40) arr[i*3+2]=cp.z+(Math.random()-.5)*80; if(arr[i*3+1]>14) arr[i*3+1]=0; arr[i*3+1]+=dt*.5; }
+    E.dust.geometry.attributes.position.needsUpdate=true; }
+  // waypoint
+  evaWaypoint(t);
   // HUD
-  E.hudT+=dt;
-  if(E.hudT>.1){ E.hudT=0; evaHud(); }
+  E.hudT+=dt; if(E.hudT>.1){ E.hudT=0; evaHud(); evaMap(); }
   if(E.o2<=0&&!E.done) evaFinish('o2');
+  if(E.integ<=0&&!E.done) evaFinish('integrity');
+}
+function emUpdate(em,dt,t){
+  if(em.type==='flare'){
+    const d=em.data;
+    if(d.phase==='run'||d.phase==='hit'){
+      const left=d.arrive-E.elapsed;
+      if(d.phase==='run'&&left<=0){ d.phase='hit'; d.hitEnd=E.elapsed+18; $('#evaFlash').style.opacity=.9; setTimeout(()=>{ const f=$('#evaFlash'); if(f) f.style.opacity=.18; },250); radio('☢️ The particle wave is here! Stay in your shelter until the all-clear.'); E.shake=.6; }
+      if(d.phase==='hit'){
+        const tg=em.target, dist=Math.hypot(E.px-tg.pos.x,E.pz-tg.pos.z), inside=dist<tg.r+1;
+        const rate=inside?d.mult:1; E.dose+=rate*dt*5; E.flareDose+=rate*dt*5;
+        if(E.elapsed>=d.hitEnd){ $('#evaFlash').style.opacity=0; const bad=E.flareDose>25; if(!bad) solveEmergency('solved'); else failEmergency('dose'); }
+      }
+    }
+    return;
+  }
+  if(em.type==='dust'){
+    const d=em.data;
+    for(const c of E.crates){ if(!c.got&&Math.hypot(E.px-c.x,E.pz-c.z)<2){ c.got=true; E.carry++; c.m.visible=false; beep(700,.1,'triangle'); evaFloat('crate picked up',true); } }
+    if(E.carry>0&&Math.hypot(E.px,E.pz)<9){ E.deposited+=E.carry; E.carry=0; addScore(40,'crates secured'); }
+    if(E.deposited>=3){ solveEmergency('solved'); return; }
+    const left=d.arrive-E.elapsed; E.scene.fog.density=E.fogBase*(1+Math.max(0,1-left/60)*4);
+    if(left<=0){ failEmergency('timeout'); }
+    return;
+  }
+  em.limitLeft-=dt;
+  if(em.type==='leak'){ E.integ=clamp(E.integ-.2*dt); E.o2=clamp(E.o2-.03*dt); }
+  if(em.type==='power'){ E.integ=clamp(E.integ-.08*dt); }
+  if(em.limitLeft<=0) failEmergency('timeout');
+}
+function evaWaypoint(t){
+  const em=E.em; let pos=null,icon='📍';
+  if(em&&!em.solved){
+    if(em.type==='medical'&&E.crew){ pos=E.crew.pos; icon='🩺'; }
+    else if((em.type==='leak'||em.type==='power')&&em.identified&&em.target){ pos=em.target.pos; icon='🛠'; }
+    else if(em.type==='flare'&&em.target&&em.target.pos){ pos=em.target.pos; icon='🏃'; }
+    else if(em.type==='dust'){ const c=E.crates.find(c=>!c.got); pos=c?new THREE.Vector3(c.x,2.5,c.z):new THREE.Vector3(0,7,0); icon=c?'📦':'🏠'; }
+  }
+  if(!pos){ E.wp.visible=false; E.wpPos=null; return; }
+  E.wpPos=pos; if(E.wpIcon!==icon){ E.wpIcon=icon; E.wp.material.map=iconSprite(icon).material.map; E.wp.material.needsUpdate=true; }
+  E.wp.visible=true; E.wp.position.set(pos.x,pos.y+(em.type==='flare'?4:3.5)+Math.sin(t/300)*.3,pos.z);
+  const dist=E.camera.position.distanceTo(E.wp.position); const s=Math.max(2.4,dist*.07); E.wp.scale.set(s,s,1);
+}
+function evaPrompt(){
+  const el=$('#evaPrompt'); if(E.work) return;
+  const t=evaFindTarget(16,.5); let html='';
+  if(t){ const d=E.camera.position.distanceTo(t.pos)-t.r*.6; if(d<5.5){ html=`<div class="hb"><b>[E]</b> Use ${esc(t.name)} · <b>[F]</b> Scan</div>`; } else if(d<30){ html=`<div class="hb"><b>[F]</b> Scan ${esc(t.name)}</div>`; } }
+  if(E.em&&E.em.type==='dust') html+=`<div class="hb">📦 Crates secured: <b>${E.deposited}/3</b> ${E.carry?` · carrying ${E.carry}`:''}</div>`;
+  el.innerHTML=html;
 }
 function evaHud(){
   const left=E.items.filter(i=>!i.got&&!i.quiz).length, dist=Math.round(Math.hypot(E.px,E.pz));
-  const ang=Math.atan2(-E.px,-E.pz)-E.yaw-Math.PI; // direction to habitat relative to view
   const o2c=E.o2>50?'var(--good)':E.o2>25?'var(--warn)':'var(--bad)';
+  const ic=E.integ>60?'var(--good)':E.integ>30?'var(--warn)':'var(--bad)';
+  const pc=E.power>60?'var(--good)':E.power>30?'var(--warn)':'var(--bad)';
   const peers=MP.room?[...E.avatars.keys()].length:0;
   $('#evaHud').innerHTML=`
     <div class="hb">🫁 <b>SUIT O₂ ${Math.round(E.o2)}%</b><div class="track"><div class="fill" style="width:${E.o2}%;background:${o2c}"></div></div></div>
-    <div class="hb">🧭 <b>HABITAT ${dist} m</b> <span style="display:inline-block;transform:rotate(${(-ang*180/Math.PI).toFixed(0)}deg);font-size:1.1rem">⬆</span></div>
-    <div class="hb">🔬 <b>SAMPLES ${E.collected.length}</b> · ${left} left${MP.room?` · 👥 ${peers+1} on EVA`:''}</div>
-    ${E.wk==='europa'?`<div class="hb">☢️ <b>DOSE ${E.dose.toFixed(0)}</b> (higher = worse)</div>`:''}`;
+    <div class="hb">🏠 <b>BASE INTEGRITY ${Math.round(E.integ)}%</b><div class="track"><div class="fill" style="width:${E.integ}%;background:${ic}"></div></div></div>
+    <div class="hb">⚡ <b>BASE POWER ${Math.round(E.power)}%</b><div class="track"><div class="fill" style="width:${E.power}%;background:${pc}"></div></div></div>
+    <div class="hb">⭐ <b>SCORE ${E.score}</b> · ✅ ${E.solved} fixed${E.failed?` · ❌ ${E.failed}`:''}<br>🔬 ${E.collected.length} samples · ${left} left${MP.room?` · 👥 ${peers+1}`:''}</div>
+    ${E.wk==='europa'?`<div class="hb">☢️ <b>DOSE ${E.dose.toFixed(0)}</b></div>`:''}`;
+  // objective panel
+  const em=E.em; let obj;
+  if(em&&!em.solved){ const d=EMERG[em.type]; const tl=em.type==='flare'?Math.max(0,Math.ceil((em.data.phase==='run'?em.data.arrive-E.elapsed:em.data.hitEnd-E.elapsed))):em.type==='dust'?Math.max(0,Math.ceil(em.data.arrive-E.elapsed)):Math.max(0,Math.ceil(em.limitLeft));
+    let steps;
+    if(em.type==='leak') steps=[[em.identified,'Scan the modules (F) and find the leak'],[false,'Go to the leaking module and press E: choose the repair']];
+    else if(em.type==='power') steps=[[em.identified,'Scan the solar panels (F), read the symptoms'],[false,'Press E at the faulty panel: choose the fix']];
+    else if(em.type==='medical') steps=[[em.identified,'Reach the crewmate and scan vitals (F)'],[false,'Press E: give the correct first aid']];
+    else if(em.type==='flare') steps=[[em.data.phase!=='choose'&&em.data.phase!=='run',`Reach your shelter (${em.data.shelter?em.data.shelter==='hab'?'habitat':em.data.shelter==='rover'?'rover':'boulder':'?'})`],[false,'Stay inside until the all-clear']];
+    else steps=[[E.deposited>=3,`Bring the 3 crates to the habitat (${E.deposited}/3)`]];
+    obj=`<div class="hb" style="border-color:var(--bad);min-width:230px"><b style="color:var(--bad)">${d.icon} ${esc(d.title)}</b><div class="sub" style="margin:2px 0">⏱ <b>${tl}s</b></div>${steps.map(s=>`<div>${s[0]?'✅':'⬜'} ${esc(s[1])}</div>`).join('')}</div>`;
+  } else obj=`<div class="hb" style="min-width:230px"><b>📋 STATUS: all systems nominal</b><div class="sub" style="margin:2px 0">${E.queue.length?`Next check-in in ~${Math.max(0,Math.ceil(E.nextAt-E.elapsed))}s. Collect samples (glowing markers) meanwhile.`:'Last emergency handled. Finishing shift…'}</div></div>`;
+  $('#evaObj').innerHTML=obj;
+  const al=$('#evaAlarm'); al.style.opacity=(em&&!em.solved&&em.type!=='dust')?(.35+.3*Math.sin(E.elapsed*7)):0;
+  $('#evaBanner').innerHTML=(em&&!em.solved)?`<div class="ban">${esc(E.banner||'')}</div>`:'';
+  if(em&&!em.solved&&E.elapsed%1<.12) beep(520,.12,'square',.03);
 }
+function evaMap(){
+  const c=$('#evaMapC'); if(!c) return; const x=c.getContext('2d'), W=150, R=75, sc=R/70;
+  x.clearRect(0,0,W,W); x.save(); x.beginPath(); x.arc(R,R,R-1,0,7); x.clip(); x.fillStyle='rgba(5,10,30,.82)'; x.fillRect(0,0,W,W);
+  // rotate so up = facing direction
+  x.translate(R,R); x.rotate(E.yaw); const P=(wx,wz)=>[(wx-E.px)*sc,(wz-E.pz)*sc];
+  x.strokeStyle='rgba(53,224,255,.2)'; x.lineWidth=1; [20,40,60].forEach(rr=>{ x.beginPath(); x.arc(0,0,rr*sc,0,7); x.stroke(); });
+  let p=P(0,0); x.fillStyle='#dde3ff'; x.beginPath(); x.arc(p[0],p[1],5*sc,0,7); x.fill();
+  E.modules.forEach(m=>{ p=P(m.pos.x,m.pos.z); x.fillStyle=(E.em&&E.em.type==='leak'&&m.leak&&E.em.identified)?'#ff5d6c':'#8e98c8'; x.fillRect(p[0]-3,p[1]-3,6,6); });
+  E.panels.forEach(m=>{ p=P(m.pos.x,m.pos.z); x.fillStyle='#2b6fe0'; x.fillRect(p[0]-1.5,p[1]-1.5,3,3); });
+  E.items.forEach(it=>{ if(it.got) return; p=P(it.x,it.z); x.fillStyle=EVACOL[it.type]; x.beginPath(); x.arc(p[0],p[1],2,0,7); x.fill(); });
+  for(const [id,av] of E.avatars){ p=P(av.position.x,av.position.z); x.fillStyle='#3ddc97'; x.beginPath(); x.arc(p[0],p[1],3,0,7); x.fill(); }
+  if(E.wpPos){ p=P(E.wpPos.x,E.wpPos.z); const pulse=3+Math.sin(E.elapsed*6)*1.5; x.strokeStyle='#ff5d6c'; x.lineWidth=2; x.beginPath(); x.arc(p[0],p[1],pulse+3,0,7); x.stroke(); x.fillStyle='#ff5d6c'; x.beginPath(); x.arc(p[0],p[1],3,0,7); x.fill(); }
+  x.restore(); x.save(); x.translate(R,R); x.fillStyle='#fff'; x.beginPath(); x.moveTo(0,-7); x.lineTo(5,6); x.lineTo(0,3); x.lineTo(-5,6); x.closePath(); x.fill(); x.restore();
+  x.strokeStyle='rgba(53,224,255,.6)'; x.lineWidth=2; x.beginPath(); x.arc(R,R,R-1,0,7); x.stroke();
+}
+
 function evaCollect(it){
   it.got=true; it.mesh.visible=false; it.beam.visible=false; beep(820,.15,'triangle');
   if(MP.room) MP.room.emit('sample',{ew:E.ew,i:it.i,who:MP.name}).catch(()=>{});
   if(it.quiz) return evaQuiz(it);
-  E.collected.push(it);
+  E.collected.push(it); addScore(50,'sample');
   evaToast(`✅ <b>${esc(it.name)}</b><br>${esc(it.fact)}`);
 }
 function evaQuiz(it){
@@ -1589,7 +1962,7 @@ function evaQuiz(it){
   E.curQ={q,opts};
 }
 function evaAnswer(i){
-  const {q,opts}=E.curQ, ok=opts[i].c; E.quizTotal++; if(ok){ E.quizRight++; beep(900,.2,'triangle'); } else beep(200,.25,'sawtooth');
+  const {q,opts}=E.curQ, ok=opts[i].c; E.quizTotal++; if(ok){ E.quizRight++; addScore(100,'quiz'); beep(900,.2,'triangle'); } else beep(200,.25,'sawtooth');
   $('#evaOv').innerHTML=`<div class="card" style="border-color:${ok?'var(--good)':'var(--bad)'}"><h2>${ok?'✅ Correct!':'❌ Not quite'}</h2><p>${esc(q.why)}</p>
     <button class="primary" onclick="evaResume()">Back to the surface ▶</button></div>`;
   E.learnedQ=(E.learnedQ||[]).concat(q.why);
@@ -1597,31 +1970,41 @@ function evaAnswer(i){
 function evaResume(){ $('#evaOv').classList.add('hidden'); if(E){ E.paused=false; E.last=performance.now(); } }
 
 function evaFinish(reason){
-  if(!E||E.done) return; E.done=true; if(document.pointerLockElement) document.exitPointerLock();
+  if(!E||E.done) return; E.done=true; E.paused=false; if(document.pointerLockElement) document.exitPointerLock();
+  $('#evaPrompt').innerHTML=''; $('#evaBanner').innerHTML=''; $('#evaAlarm').style.opacity=0; $('#evaFlash').style.opacity=0;
+  if(E.em&&!E.em.solved){ E.missed++; E.history.push({type:E.em.type,res:'abandoned'}); E.lessons.push(EMERG[E.em.type].lesson); }
   let sci=0,mat=0,water=0; const learned=[];
   E.collected.forEach(it=>{ const r=EVAREW[it.type]; sci+=r.sci||0; mat+=r.mat||0; water+=r.water||0; learned.push(it.fact); });
-  sci+=E.quizRight*6; (E.learnedQ||[]).forEach(w=>learned.push(w));
-  const dose=Math.round(E.dose), emergency=reason==='o2';
+  sci+=E.quizRight*6+E.solved*8; (E.learnedQ||[]).forEach(w=>learned.push(w));
+  const dose=Math.round(E.dose), o2out=reason==='o2', lost=reason==='integrity';
+  const total=E.history.length+(E.queue.length), solvedAll=E.solved===EMSETS[E.wk].length;
+  const grade=lost||o2out?'F':solvedAll&&E.score>=1400?'S':E.solved>=3&&E.score>=800?'A':E.solved>=2?'B':'C';
   if(E.mission&&G){
-    addSci(Math.round(sci*mods().sci)); G.mat+=mat; applyDelta({water:water,morale:6,oxygen:-8});
-    if(dose) applyDelta({health:-Math.round(dose*.35)},true);
-    if(emergency) applyDelta({health:-12,morale:-6});
-    log(`🥽 3D EVA: ${E.collected.length} samples, ${E.quizRight}/${E.quizTotal} beacon answers right.${emergency?' Suit oxygen ran out — emergency recovery!':''}`);
-    learned.forEach(f=>learn(f)); ach('eva');
+    addSci(Math.round(sci*mods().sci)); G.mat+=mat; applyDelta({water:water,morale:E.solved>=2?10:3,oxygen:-8});
+    if(dose) applyDelta({health:-Math.round(dose*.3)},true);
+    if(o2out) applyDelta({health:-12,morale:-6});
+    if(lost) applyDelta({health:-15,morale:-12,power:-20});
+    else if(E.failed) applyDelta({power:-6*E.failed,morale:-4*E.failed});
+    log(`🥽 3D shift: ${E.solved} emergencies solved, ${E.failed} failed, ${E.collected.length} samples (grade ${grade}).`);
+    learned.forEach(f=>learn(f)); E.lessons.forEach(f=>learn(f)); ach('eva'); if(E.solved>=3) ach('responder');
   }
+  const names={leak:'Air leak',power:'Power failure',medical:'Crewmate down',flare:'Solar flare',dust:'Dust storm'};
+  const resTxt={solved:'✅ Solved',team:'🤝 Solved by team',failed:'❌ Failed',abandoned:'⚪ Left unfinished'};
+  const lessonSet=[...new Set(E.lessons)];
   const ov=$('#evaOv'); ov.classList.remove('hidden');
-  ov.innerHTML=`<div class="card"><h2>${emergency?'⚠ Suit oxygen low: emergency return':'🏠 Back in the habitat'}</h2>
-    <p>Samples: <b>${E.collected.length}</b> · Beacon questions right: <b>${E.quizRight}/${E.quizTotal}</b> · Science: <b>+${sci}</b>${E.mission?'':' <span class="tag">practice mode</span>'}${MP.room?` · 👥 Team samples: <b>${E.collected.length+E.team}</b>`:''}</p>
+  ov.innerHTML=`<div class="card"><h2>${lost?'💥 Base lost: evacuation':o2out?'⚠ Suit oxygen out: emergency recovery':'📋 Shift report'} <span class="tag" style="font-size:1rem">Grade ${grade}</span></h2>
+    <p>⭐ Score <b>${E.score}</b> · Emergencies solved <b>${E.solved}</b>/${EMSETS[E.wk].length} · Samples <b>${E.collected.length}</b> · Beacons right <b>${E.quizRight}/${E.quizTotal}</b> · Science <b>+${sci}</b>${E.mission?'':' <span class="tag">practice mode</span>'}${MP.room?` · 👥 Team samples <b>${E.collected.length+E.team}</b>`:''}</p>
+    ${E.history.length?`<h3>Emergencies</h3>${E.history.map(h=>`<div class="peer"><span>${EMERG[h.type].icon}</span><b>${names[h.type]}</b><span class="sub" style="margin:0">${resTxt[h.res]||h.res}</span></div>`).join('')}`:''}
     ${E.wk==='europa'?`<p class="sub">☢️ Radiation dose: ${dose}. On the real Europa, an unshielded person would receive a lethal dose in about a day.</p>`:''}
-    <h3>What you learned</h3>
-    ${learned.length?learned.map(f=>`<div class="fact">${esc(f)}</div>`).join(''):'<p class="sub">Collect glowing markers next time to learn more!</p>'}
+    <h3 style="margin-top:12px">What you learned</h3>
+    ${[...lessonSet,...learned].length?[...lessonSet,...learned].map(f=>`<div class="fact">${esc(f)}</div>`).join(''):'<p class="sub">Handle emergencies and collect markers to learn more!</p>'}
     <button class="primary" style="width:100%" onclick="evaExit()">Continue ▶</button></div>`;
 }
 function evaExit(){
   if(!E) return; const wasMission=E.mission;
   cancelAnimationFrame(E.raf); removeEventListener('resize',E.resize); E.unbind();
   E.renderer.dispose(); E.scene.traverse(o=>{ if(o.geometry) o.geometry.dispose(); if(o.material){ (Array.isArray(o.material)?o.material:[o.material]).forEach(m=>{ if(m.map) m.map.dispose(); m.dispose(); }); } });
-  E=null; $('#eva').classList.add('hidden'); $('#evaOv').classList.add('hidden'); document.body.style.overflow='';
+  E=null; $('#eva').classList.add('hidden'); $('#evaOv').classList.add('hidden'); $('#evaCard').innerHTML=''; $('#evaHud').innerHTML=''; $('#evaObj').innerHTML=''; document.body.style.overflow='';
   if(wasMission&&G){ if(checkFail()) return render(); }
   render(); mpSync();
 }
