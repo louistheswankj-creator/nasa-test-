@@ -4,477 +4,1020 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mission Survive – Astronaut Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#070b1a; --panel:#111936; --panel2:#18224a; --text:#e8ecff; --muted:#9aa6d6;
-    --accent:#4cc9f0; --good:#4ade80; --warn:#fbbf24; --bad:#f87171; --line:#26336b;
+    --bg:#050816; --panel:rgba(14,22,52,.82); --panel2:rgba(26,38,84,.9); --text:#e9eeff; --muted:#93a0d4;
+    --accent:#35e0ff; --accent2:#ff7a3d; --good:#3ddc97; --warn:#ffc53d; --bad:#ff5d6c; --line:#25356f;
+    --display:'Orbitron','Exo 2',system-ui,sans-serif; --body:'Exo 2',system-ui,sans-serif;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text);
-    background:radial-gradient(ellipse at top,#16224f 0,#070b1a 60%) fixed;min-height:100vh}
+  body{margin:0;font-family:var(--body);font-size:16px;color:var(--text);background:var(--bg);min-height:100vh}
   #stars{position:fixed;inset:0;z-index:-1;width:100%;height:100%}
-  main{max-width:960px;margin:0 auto;padding:16px}
-  h1{margin:8px 0 4px;font-size:2rem;letter-spacing:.5px}
-  h2{margin:0 0 8px}
-  .sub{color:var(--muted);margin:0 0 16px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
-  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
-  button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;
-    padding:10px 14px;cursor:pointer;text-align:left;transition:.15s}
-  button:hover:not(:disabled){border-color:var(--accent);transform:translateY(-1px)}
+  main{max-width:1000px;margin:0 auto;padding:14px 16px 40px}
+  h1,h2,h3{font-family:var(--display);margin:0 0 8px;letter-spacing:.04em}
+  h1{font-size:1.9rem;background:linear-gradient(90deg,var(--accent),#b28cff,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  h2{font-size:1.15rem;color:var(--accent)}
+  h3{font-size:.95rem}
+  .sub{color:var(--muted);margin:0 0 14px}
+  .card{background:var(--panel);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 6px 28px rgba(0,0,0,.35)}
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+  button,select,input[type=text]{font:inherit;color:var(--text)}
+  button{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;text-align:left;transition:.15s}
+  button:hover:not(:disabled){border-color:var(--accent);box-shadow:0 0 14px rgba(53,224,255,.25);transform:translateY(-1px)}
   button:disabled{opacity:.4;cursor:not-allowed}
-  button.primary{background:var(--accent);color:#04101c;font-weight:700;text-align:center}
-  .dest{display:flex;flex-direction:column;gap:6px}
-  .dest .emoji{font-size:2.4rem}
+  button.primary{background:linear-gradient(135deg,var(--accent),#6a8cff);color:#04101c;font-family:var(--display);font-weight:700;text-align:center;border:none;letter-spacing:.05em}
+  button.sel{border-color:var(--accent);background:rgba(53,224,255,.14);box-shadow:0 0 0 1px var(--accent) inset}
+  input[type=text],select{background:#0a1030;border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+  .dest{display:flex;flex-direction:column;gap:6px;padding:16px}
+  .dest .emoji{font-size:2.6rem}
   .dest ul{margin:4px 0;padding-left:18px;color:var(--muted);font-size:.9rem}
-  .tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:99px;background:#0b1230;border:1px solid var(--line);color:var(--muted)}
-  .bars{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
-  .bar{background:#0b1230;border-radius:8px;padding:6px 8px;border:1px solid var(--line)}
+  .tag{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:99px;background:#0a1030;border:1px solid var(--line);color:var(--muted);margin-right:4px}
+  .bars{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}
+  .bar{background:rgba(5,8,22,.7);border-radius:8px;padding:6px 8px;border:1px solid var(--line)}
   .bar .lbl{display:flex;justify-content:space-between;font-size:.8rem;color:var(--muted)}
-  .bar .track{height:8px;background:#1b2652;border-radius:6px;margin-top:4px;overflow:hidden}
-  .bar .fill{height:100%;transition:width .4s,background .4s}
-  .top{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:10px}
-  .actions{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+  .bar .lbl b{font-family:var(--display);color:var(--text);font-size:.8rem}
+  .bar .track{height:8px;background:#16204a;border-radius:6px;margin-top:4px;overflow:hidden}
+  .bar .fill{height:100%;transition:width .5s,background .5s;border-radius:6px}
+  .hud{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .hud .num{font-family:var(--display);color:var(--accent)}
+  .pips{display:inline-flex;gap:4px;vertical-align:middle}
+  .pip{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent)}
+  .pip.on{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .prog{height:6px;background:#16204a;border-radius:4px;overflow:hidden;margin:6px 0 10px}
+  .prog>div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .tabs button{padding:8px 12px;font-family:var(--display);font-size:.72rem;letter-spacing:.05em}
+  .actions{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
   .actions button b{display:block}
   .actions button small{color:var(--muted)}
-  .log{max-height:160px;overflow:auto;font-size:.88rem;color:var(--muted);border-top:1px dashed var(--line);margin-top:10px;padding-top:8px}
+  .log{max-height:150px;overflow:auto;font-size:.86rem;color:var(--muted);border-top:1px dashed var(--line);margin-top:10px;padding-top:8px}
   .log p{margin:3px 0}
-  .fact{border-left:4px solid var(--accent);background:#0d1636;padding:10px 12px;border-radius:0 10px 10px 0;margin:10px 0;font-size:.92rem}
+  .fact{border-left:4px solid var(--accent);background:rgba(10,16,48,.85);padding:10px 12px;border-radius:0 10px 10px 0;margin:10px 0;font-size:.92rem}
   .fact b{color:var(--accent)}
   .choices{display:grid;gap:8px;margin-top:10px}
-  .big{font-size:3rem;margin:0}
   .center{text-align:center}
+  .big{font-size:3.2rem;margin:0}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .hidden{display:none}
   .tech{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--line)}
   .tech.locked{opacity:.35}
   .tech .e{font-size:1.5rem}
-  .hidden{display:none}
-  .row{display:flex;gap:10px;flex-wrap:wrap}
-  .ap{font-weight:700;color:var(--accent)}
-  @media(max-width:520px){h1{font-size:1.5rem}}
+  #sceneWrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-bottom:14px;box-shadow:0 6px 28px rgba(0,0,0,.4)}
+  #scene{display:block;width:100%;height:auto;background:#000}
+  #map{position:relative;height:300px;border-radius:12px;border:1px solid var(--line);overflow:hidden;
+    background:radial-gradient(circle at 50% 55%,rgba(53,224,255,.12),transparent 60%),
+    repeating-linear-gradient(0deg,transparent 0 29px,rgba(53,224,255,.08) 29px 30px),
+    repeating-linear-gradient(90deg,transparent 0 29px,rgba(53,224,255,.08) 29px 30px),#070d26}
+  .site{position:absolute;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;padding:0;text-align:center;font-size:1.4rem;line-height:42px;background:#0e1a46}
+  .site.done{border-color:var(--good)}
+  .site.sel{box-shadow:0 0 18px var(--accent);border-color:var(--accent)}
+  .hab{position:absolute;left:50%;top:55%;transform:translate(-50%,-50%);font-size:1.6rem;pointer-events:none}
+  .lander-wrap{position:relative}
+  #lc{display:block;width:100%;height:auto;border-radius:12px;border:1px solid var(--line);background:#02030a}
+  .ctrl{display:flex;gap:12px;justify-content:center;margin-top:10px}
+  .ctrl button{width:84px;height:60px;font-size:1.5rem;text-align:center;user-select:none;touch-action:none}
+  .opt{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;cursor:pointer;background:rgba(5,8,22,.5)}
+  .opt.on{border-color:var(--accent);background:rgba(53,224,255,.1)}
+  .opt input{margin-top:4px}
+  #toasts{position:fixed;right:12px;bottom:12px;display:flex;flex-direction:column;gap:8px;z-index:50;max-width:min(340px,90vw)}
+  .toast{background:var(--panel2);border:1px solid var(--accent);border-radius:10px;padding:10px 12px;font-size:.9rem;animation:pop .3s}
+  @keyframes pop{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+  .snd{position:fixed;top:10px;right:10px;padding:6px 10px;z-index:40;font-size:.85rem}
+  .mapinfo{margin-top:10px}
+  @media(max-width:520px){h1{font-size:1.35rem}#map{height:260px}}
 </style>
 </head>
 <body>
 <canvas id="stars"></canvas>
+<button class="snd" id="sndBtn" onclick="toggleSound()">🔇 Sound off</button>
+<div id="toasts"></div>
 <main>
-  <h1>🚀 Mission Survive</h1>
-  <p class="sub">Command a crewed mission, keep your astronaut alive, and discover why exploring space matters back home.</p>
+  <h1>🚀 MISSION SURVIVE</h1>
+  <p class="sub">Command a crewed mission. Land, build a base, explore, and learn why space exploration matters.</p>
+  <div id="sceneWrap" class="hidden"><canvas id="scene" width="960" height="250"></canvas></div>
   <div id="app"></div>
 </main>
 
 <script>
 "use strict";
-/* ---------- starfield background ---------- */
-(function(){
-  const c=document.getElementById('stars'),x=c.getContext('2d');
-  let stars=[];
-  function size(){c.width=innerWidth;c.height=innerHeight;
-    stars=Array.from({length:140},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.4+.2,s:Math.random()*.25+.05,p:Math.random()*6}));}
-  function draw(t){
-    x.clearRect(0,0,c.width,c.height);
-    for(const s of stars){
-      s.y+=s.s; if(s.y>c.height){s.y=0;s.x=Math.random()*c.width}
-      x.globalAlpha=.5+.5*Math.sin(t/700+s.p);
-      x.fillStyle='#fff';x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill();
-    }
-    requestAnimationFrame(draw);
-  }
-  addEventListener('resize',size);size();requestAnimationFrame(draw);
-})();
-
-/* ---------- game data ---------- */
-const STATS = {
-  oxygen:{label:'Oxygen',icon:'🫁'}, water:{label:'Water',icon:'💧'}, food:{label:'Food',icon:'🥫'},
-  power:{label:'Power',icon:'⚡'}, health:{label:'Health',icon:'❤️'}, morale:{label:'Morale',icon:'🙂'}
-};
-
-const DESTINATIONS = {
-  moon:{
-    name:'The Moon', emoji:'🌕', days:12, difficulty:'Beginner',
-    facts:['Gravity: 1/6 of Earth','No atmosphere','Surface: −170 °C to 120 °C','2 days away by rocket'],
-    drain:{oxygen:6,water:4,food:4,power:4,morale:1}, solar:26, exploreRisk:.15,
-    iceLine:'Water ice hides in permanently shadowed craters near the lunar south pole.',
-    intro:'You land near the lunar south pole, where Artemis-style missions plan to build a base. There is no air, no weather — just sharp dust, deep shadows and the Earth hanging in the sky.',
-    science:'Moon rocks record 4.5 billion years of solar-system history.'
-  },
-  mars:{
-    name:'Mars', emoji:'🔴', days:16, difficulty:'Hard',
-    facts:['Gravity: 38% of Earth','Air: 95% CO₂, 1% as thick as ours','Avg −60 °C, huge dust storms','6–9 months of travel'],
-    drain:{oxygen:6,water:5,food:5,power:5,morale:2}, solar:20, exploreRisk:.2,
-    iceLine:'Ice sits just under the surface at mid and high latitudes of Mars.',
-    intro:'After a seven-month journey you touch down in a rust-colored plain. A signal to Earth takes up to 22 minutes each way, so you must make decisions on your own.',
-    science:'Ancient river deltas on Mars suggest it once had liquid water — and maybe life.'
-  },
-  europa:{
-    name:'Europa (moon of Jupiter)', emoji:'🧊', days:14, difficulty:'Expert',
-    facts:['Gravity: 13% of Earth','Ice shell over a salty ocean','Surface ≈ −160 °C','Radiation would kill you in hours'],
-    drain:{oxygen:6,water:4,food:5,power:6,morale:2}, solar:9, exploreRisk:.28,
-    iceLine:'The entire surface is water ice — plenty of it, but sunlight is 25× weaker than at Earth.',
-    intro:'A sci-fi-flavored scenario: a robotic-assisted outpost on Jupiter\'s icy moon. Sunlight is faint and Jupiter\'s radiation belts are brutal, so power and shielding come first.',
-    science:'Europa has about twice as much water as all of Earth\'s oceans, making it a top place to search for life.'
-  }
-};
-
-/* Daily actions (2 per day) */
-const ACTIONS = [
-  {id:'science',icon:'🔬',name:'Field Science',desc:'Collect samples & run experiments.',
-    cost:{power:8,oxygen:4,water:2}, gain:{morale:4}, sci:12, risk:true},
-  {id:'ice',icon:'⛏️',name:'Mine Ice',desc:'Drill and melt ice for water (ISRU).',
-    cost:{power:10}, gain:{water:28}, sci:2, risk:true,
-    fact:'In-Situ Resource Utilization (ISRU) means "living off the land". Every kilogram of water you make locally is a kilogram you don\'t have to launch from Earth — launching costs roughly $1M+ per 100 kg.'},
-  {id:'oxy',icon:'🧪',name:'Run Electrolysis',desc:'Split 10 water into breathable oxygen.',
-    cost:{power:8,water:10}, gain:{oxygen:30}, sci:1,
-    fact:'The ISS already recycles ~90% of its water and makes its oxygen by electrolysis. Mars\' MOXIE experiment made oxygen straight from the CO₂ atmosphere.'},
-  {id:'farm',icon:'🌱',name:'Tend Greenhouse',desc:'Grow fresh food (and morale!).',
-    cost:{power:6,water:6}, gain:{food:24,morale:4}, sci:3,
-    fact:'Astronauts on the ISS have grown and eaten lettuce, radishes and chili peppers. Plants also recycle CO₂ back into oxygen.'},
-  {id:'power',icon:'☀️',name:'Service Power Grid',desc:'Clean panels & recharge batteries.',
-    cost:{}, gain:{}, sci:1, special:'power'},
-  {id:'exercise',icon:'🏃',name:'Exercise',desc:'2 hours on the treadmill & resistance rig.',
-    cost:{power:3,water:2}, gain:{health:12}, sci:0,
-    fact:'In low gravity, astronauts can lose 1–2% of bone mass per month. Two hours of daily exercise is a mandatory part of life on the ISS.'},
-  {id:'rest',icon:'😴',name:'Rest & Call Home',desc:'Sleep, eat well, video call family.',
-    cost:{}, gain:{health:6,morale:14}, sci:0,
-    fact:'Isolation is a real hazard. Space agencies study crews in Antarctica and sealed-habitat experiments like HI-SEAS and SIRIUS to learn how to keep teams healthy.'}
-];
-
-/* Random events */
-const EVENTS = {
-  all:[
-    {title:'Sudden Solar Flare ☀️💥',
-     text:'Mission control warns of a solar particle event arriving in 30 minutes. Radiation levels outside are climbing.',
-     choices:[
-       {t:'Shelter in the shielded storm cell',e:{morale:-5,power:-4},res:'You wait it out in the water-lined safe room. Water is a great radiation shield!'},
-       {t:'Finish your outdoor task first',e:{health:-28},sci:10,res:'You got the data, but absorbed a hefty dose of radiation.'}],
-     fact:'Space radiation is one of the biggest challenges for deep-space travel. Out of Earth\'s magnetic field you face solar particles and galactic cosmic rays.'},
-    {title:'Water Pump Failure 🔧',
-     text:'A pump in the water-recycling loop is leaking. Can you fix it?',
-     choices:[
-       {t:'Spend time repairing it (-power)',e:{power:-10},res:'Fixed with a spare gasket. Crisis averted.'},
-       {t:'Ignore it and ration water',e:{water:-22,morale:-4},res:'You lose a fair bit of water before the leak is patched.'}],
-     fact:'On the ISS, astronauts act as plumbers, electricians and doctors. Cross-training is crucial when help is months away.'},
-    {title:'Strange Noise in the Habitat 🔊',
-     text:'A rhythmic thumping is coming from the air handling unit.',
-     choices:[
-       {t:'Inspect and clean the fan',e:{power:-4},sci:3,res:'A clogged filter. Cleaned and humming again.'},
-       {t:'Turn up the music and ignore it',e:{oxygen:-15},res:'The fan was failing — you lost some air circulation.'}],
-     fact:'Without convection in microgravity, hot stale air doesn\'t rise — so fans keep CO₂ from pooling around astronauts\' faces.'},
-    {title:'Message From Earth 📡',
-     text:'Mission control sends a package of encouragement from schoolchildren around the world.',
-     choices:[{t:'Read them aloud to the team 🥹',e:{morale:18},res:'Morale soars.'}],
-     fact:'Space exploration inspires people across the planet. Many scientists and engineers cite the Apollo missions as why they chose their careers.'},
-    {title:'Lucky Find 💎',
-     text:'Your rover spots an unusual, layered rock outcrop nearby.',
-     choices:[
-       {t:'Study it carefully (-power)',e:{power:-6},sci:18,res:'The layers reveal ancient geological history!'},
-       {t:'Take a quick photo and move on',e:{},sci:6,res:'A decent photo for the scientists back home.'}],
-     fact:'Layered rocks are like history books. Geologists read them to understand how planets form and change.'}
-  ],
-  moon:[
-    {title:'Lunar Dust Attack 🌫️',
-     text:'Regolith dust is clinging to your suit and may clog the airlock seals. Lunar dust is razor-sharp and statically charged.',
-     choices:[
-       {t:'Thorough cleaning routine',e:{power:-5,water:-3},res:'Seals stay clean. Slow but safe.'},
-       {t:'Quick brush-off',e:{health:-12,oxygen:-10},res:'Fine dust seeps inside. Coughing and a small air leak.'}],
-     fact:'Apollo astronauts reported "lunar hay fever" and worn-out suit fabric from dust. It\'s one of the main engineering challenges for modern lunar missions.'},
-    {title:'Micrometeorite Strike 💫',
-     text:'With no atmosphere to burn them up, tiny space rocks hit the surface at tens of thousands of km/h. One hits a solar panel.',
-     choices:[{t:'Go out and patch the panel',e:{power:-12,oxygen:-4},res:'Panel patched.'},
-              {t:'Run on reduced power',e:{power:-20},res:'You lose a lot of generation capacity.'}],
-     fact:'Earth\'s atmosphere shields us from most space debris. On the Moon, habitats will need thick walls or can be buried under regolith.'},
-    {title:'Two-Week Night Begins 🌑',
-     text:'The Sun sets and will stay down for ~14 Earth days at your latitude on parts of the Moon. Solar power drops.',
-     choices:[{t:'Switch to battery saver mode',e:{power:-14,morale:-4},res:'You conserve energy, but the habitat is cold and dim.'}],
-     fact:'A lunar "day" lasts about 29.5 Earth days. Missions near the poles pick sites with near-constant sunlight on high "peaks of eternal light".'}
-  ],
-  mars:[
-    {title:'Global Dust Storm 🌪️',
-     text:'A planet-encircling dust storm darkens the sky. Solar panels barely work.',
-     choices:[{t:'Hunker down and wait it out',e:{power:-22,morale:-8},res:'It blows for days. You survive on batteries.'},
-              {t:'Run the backup nuclear generator',e:{power:-5,health:-4},res:'Kilopower-style fission provides steady energy. A nervous few days, but it works.'}],
-     fact:'In 2018, a dust storm ended NASA\'s solar-powered Opportunity rover after 15 years. Nuclear power is likely essential for long Martian stays.'},
-    {title:'Toxic Soil ☠️',
-     text:'Lab tests show Martian soil contains perchlorates — toxic salts — that could poison your greenhouse crops.',
-     choices:[{t:'Wash the soil with water first',e:{water:-12,power:-3},sci:6,res:'The washed soil is safe for planting.'},
-              {t:'Plant anyway',e:{food:-18,health:-8},res:'The crops fail and you feel sick.'}],
-     fact:'Perchlorates were first found by NASA\'s Phoenix lander in 2008. Bacteria and washing can remove them — a good problem for chemists!'},
-    {title:'Comms Delay ⏳',
-     text:'Mission control is 20 light-minutes away. You face a tricky decision and can\'t wait for an answer.',
-     choices:[{t:'Trust the crew\'s training',e:{morale:6},sci:5,res:'Autonomy pays off. You solve it yourself.'},
-              {t:'Wait for instructions',e:{power:-8,food:-8},res:'Hours of delay burn resources.'}],
-     fact:'Unlike Apollo, Mars crews can\'t get real-time help, so they need self-reliant AI tools and extensive training.'},
-    {title:'MOXIE Opportunity 🌬️',
-     text:'Your oxygen-from-CO₂ experiment is working better than expected.',
-     choices:[{t:'Scale it up',e:{power:-8,oxygen:+25},res:'You turn the thin CO₂ atmosphere into breathable oxygen.'}],
-     fact:'NASA\'s MOXIE on the Perseverance rover made oxygen on Mars from CO₂ 16 times. A full-scale version could fuel both astronauts and rockets.'}
-  ],
-  europa:[
-    {title:'Jupiter Radiation Belt ☢️',
-     text:'Jupiter\'s magnetosphere flares. Radiation doses are spiking even inside the habitat.',
-     choices:[{t:'Retreat to the ice-shielded bunker',e:{morale:-8,power:-6},res:'Ice makes superb shielding.'},
-              {t:'Keep working',e:{health:-30},sci:12,res:'Great data, terrible dose.'}],
-     fact:'Europa gets ~5 Sv/day of radiation at the surface — a lethal dose for humans in about a day. That\'s why robots and shielding are vital.'},
-    {title:'Ice Quake 🧊',
-     text:'The ice shell flexes from Jupiter\'s tides, cracking the surface near your lander.',
-     choices:[{t:'Take samples from the fresh crack',e:{oxygen:-6,power:-4},sci:22,res:'You gather briny ice from the subsurface — it might contain biosignatures!'},
-              {t:'Move the habitat to safer ice',e:{power:-14},res:'A tiring relocation, but safe.'}],
-     fact:'Jupiter\'s gravity flexes Europa, heating its interior. Plumes of water vapor seem to erupt from cracks, giving us free samples from below.'},
-    {title:'Faint Sunlight 🌑',
-     text:'Sunlight at Jupiter is ~4% of that at Earth. Your solar arrays are underperforming.',
-     choices:[{t:'Deploy extra panels',e:{power:-10,oxygen:-3},res:'More panels, a bit more power.'},
-              {t:'Turn off non-essential systems',e:{morale:-10,power:-4},res:'Cold, dark, and glum.'}],
-     fact:'NASA\'s Juno probe at Jupiter uses huge solar panels, while Voyager and Cassini used radioisotope generators. Europa Clipper has big arrays too.'}
-  ]
-};
-
-/* Spin-off technologies unlocked by science score */
-const SPINOFFS = [
-  {at:10,icon:'🏥',name:'Better Medical Imaging',txt:'Digital image processing developed for Apollo-era lunar imagery now powers CT and MRI scans.'},
-  {at:25,icon:'💧',name:'Water Purification',txt:'Spacecraft water-recycling tech now provides clean drinking water in remote villages worldwide.'},
-  {at:40,icon:'📷',name:'Phone Camera Sensors',txt:'The CMOS image sensor was invented at NASA\'s JPL to make cameras smaller for spacecraft. It\'s in every smartphone.'},
-  {at:60,icon:'🛰️',name:'GPS & Satellites',txt:'Satellite navigation, weather forecasting and global communications all depend on space technology.'},
-  {at:80,icon:'🌍',name:'Climate Science',txt:'Studying other planets (like Venus\' greenhouse effect) helps us understand climate change on Earth.'},
-  {at:100,icon:'🧬',name:'Life Beyond Earth?',txt:'Finding life elsewhere would reshape biology and answer one of humanity\'s biggest questions.'},
-  {at:130,icon:'☄️',name:'Planetary Defense',txt:'Studying asteroids and comets lets us build defenses — in 2022 NASA\'s DART mission nudged an asteroid\'s orbit.'}
-];
-
-const GENERAL_FACTS = [
-  'Space exploration has produced over 2,000 spin-off technologies, from memory foam to scratch-resistant lenses.',
-  'The ISS has been continuously inhabited since November 2000.',
-  'Without a spacesuit in a vacuum, you\'d lose consciousness in roughly 10–15 seconds.',
-  'Exploring other worlds teaches us how fragile and special Earth is — the "Overview Effect" that astronauts often report.',
-  'Rockets need to reach ~28,000 km/h to stay in orbit around Earth.',
-  'Space missions are team efforts — thousands of engineers, scientists, doctors and teachers support each astronaut.'
-];
-
-/* ---------- game state ---------- */
-let G = null;
+/* ============ utilities ============ */
 const $ = s => document.querySelector(s);
 const app = $('#app');
 const clamp = (v,a=0,b=100) => Math.max(a,Math.min(b,v));
 const pick = a => a[Math.floor(Math.random()*a.length)];
+const rnd = (a,b) => a+Math.random()*(b-a);
+const shuffle = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const store = {
+  get(k,d){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+
+/* sound (WebAudio, off by default) */
+let soundOn=false, actx=null;
+function toggleSound(){
+  soundOn=!soundOn; $('#sndBtn').textContent = soundOn?'🔊 Sound on':'🔇 Sound off';
+  if(soundOn){ try{ actx = actx || new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ soundOn=false; } beep(660,.08); }
+}
+function beep(f,d=.1,type='sine',vol=.05){
+  if(!soundOn||!actx) return;
+  try{
+    const o=actx.createOscillator(), g=actx.createGain();
+    o.type=type; o.frequency.value=f; g.gain.value=vol;
+    o.connect(g); g.connect(actx.destination);
+    o.start(); g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d); o.stop(actx.currentTime+d);
+  }catch(e){}
+}
+function toast(msg){
+  const el=document.createElement('div'); el.className='toast'; el.innerHTML=msg;
+  $('#toasts').appendChild(el); setTimeout(()=>el.remove(),4200);
+}
+
+/* ============ background stars ============ */
+(function(){
+  const c=$('#stars'),x=c.getContext('2d'); let stars=[];
+  function size(){c.width=innerWidth;c.height=innerHeight;
+    stars=Array.from({length:150},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.4+.2,s:Math.random()*.2+.04,p:Math.random()*6}));}
+  function draw(t){
+    x.fillStyle='#050816';x.fillRect(0,0,c.width,c.height);
+    const g=x.createRadialGradient(c.width*.5,0,0,c.width*.5,0,c.height);
+    g.addColorStop(0,'rgba(60,70,170,.35)');g.addColorStop(1,'rgba(5,8,22,0)');x.fillStyle=g;x.fillRect(0,0,c.width,c.height);
+    for(const s of stars){
+      s.y+=s.s; if(s.y>c.height){s.y=0;s.x=Math.random()*c.width}
+      x.globalAlpha=.4+.6*Math.abs(Math.sin(t/800+s.p)); x.fillStyle='#fff';
+      x.beginPath();x.arc(s.x,s.y,s.r,0,7);x.fill();
+    }
+    x.globalAlpha=1; requestAnimationFrame(draw);
+  }
+  addEventListener('resize',size);size();requestAnimationFrame(draw);
+})();
+
+/* ============ game data ============ */
+const STATS = {
+  oxygen:{label:'Oxygen',icon:'🫁'}, water:{label:'Water',icon:'💧'}, food:{label:'Food',icon:'🥫'},
+  power:{label:'Power',icon:'⚡'}, health:{label:'Health',icon:'❤️'}, morale:{label:'Morale',icon:'🙂'}
+};
+const ICON = {oxygen:'🫁',water:'💧',food:'🥫',power:'⚡',health:'❤️',morale:'🙂',mat:'🧱',sci:'🔬'};
+
+const DIFFS = {
+  cadet:{name:'Cadet (easier)',drain:.8,risk:.8,event:.5},
+  normal:{name:'Normal',drain:1,risk:1,event:.62},
+  veteran:{name:'Veteran (hard)',drain:1.25,risk:1.25,event:.75}
+};
+
+const CREW = {
+  engineer:{icon:'🛠️',name:'Engineer',desc:'Buildings cost 30% less. Power grid servicing +50%.'},
+  geologist:{icon:'🪨',name:'Geologist',desc:'+40% science. Ice mining +30%.'},
+  doctor:{icon:'🩺',name:'Flight Doctor',desc:'Healing +50%. Radiation damage −30%.'},
+  botanist:{icon:'🌿',name:'Botanist',desc:'Greenhouse yield +50% and boosts morale.'}
+};
+
+const LOADOUT = [
+  {id:'o2',icon:'🫁',name:'Spare oxygen tanks',cost:2,desc:'+15 starting oxygen'},
+  {id:'h2o',icon:'💧',name:'Extra water tanks',cost:2,desc:'+15 starting water'},
+  {id:'food',icon:'🥫',name:'Freeze-dried meals',cost:2,desc:'+15 starting food'},
+  {id:'solar',icon:'🔋',name:'Extra battery pack',cost:2,desc:'+15 starting power'},
+  {id:'shield',icon:'🛡️',name:'Radiation vest',cost:3,desc:'−25% radiation damage'},
+  {id:'rover',icon:'🚙',name:'Pressurized rover',cost:3,desc:'−20% expedition risk'},
+  {id:'med',icon:'💊',name:'Medical kit',cost:2,desc:'+10 starting health recovery on day 1 and +1 daily'},
+  {id:'mats',icon:'🧱',name:'Prefab building kit',cost:2,desc:'+12 starting materials'}
+];
+const LOAD_BUDGET = 8;
+
+const DESTS = {
+  moon:{
+    name:'The Moon', emoji:'🌕', days:12, diff:'Beginner', g:30,
+    facts:['Gravity: 1/6 of Earth','No atmosphere','−170 °C to +120 °C','3 days away by rocket'],
+    drain:{oxygen:6,water:4,food:4,power:4,morale:1}, solar:26, risk:.14,
+    iceLine:'Water ice hides in permanently shadowed craters near the south pole.',
+    intro:'You descend toward the lunar south pole, where Artemis-style missions plan their first base. No air, no weather — just razor dust, deep shadows and Earth hanging in the black sky.',
+    science:'Moon rocks record 4.5 billion years of solar-system history.',
+    sites:[
+      {id:'shack',icon:'❄️',name:'Shackleton Crater Rim',x:18,y:28,cost:{power:12,oxygen:8},sci:14,water:25,mat:4,risk:.2,dmg:12,
+       desc:'A crater whose floor never sees sunlight.',fact:'Shackleton crater near the lunar south pole has floors in permanent shadow, cold enough (−230 °C) to trap water ice for billions of years.'},
+      {id:'apollo',icon:'🏁',name:'Apollo Heritage Site',x:78,y:26,cost:{power:10,oxygen:6},sci:10,morale:14,risk:.08,dmg:8,
+       desc:'Visit footprints that have lasted decades.',fact:'Apollo footprints will last millions of years: with no wind or rain on the Moon, only micrometeorites slowly erode them.'},
+      {id:'tube',icon:'🕳️',name:'Lava Tube Skylight',x:82,y:72,cost:{power:12,oxygen:8},sci:16,mat:12,risk:.3,dmg:15,
+       desc:'A collapsed pit leading into a huge cave.',fact:'Lava tubes on the Moon could be kilometres wide — natural shelters from radiation, temperature swings and micrometeorites.'},
+      {id:'high',icon:'⛰️',name:'Highlands Quarry',x:20,y:76,cost:{power:10,oxygen:6},sci:6,mat:16,risk:.12,dmg:9,
+       desc:'Rich in aluminium, silicon and oxygen-bearing rock.',fact:'Lunar rock is about 43% oxygen by weight — locked in minerals. Future bases may extract it to breathe and make rocket fuel.'},
+      {id:'far',icon:'📡',name:'Far-Side Radio Zone',x:50,y:12,cost:{power:14,oxygen:8},sci:20,risk:.18,dmg:10,
+       desc:'Shielded from Earth\'s radio noise.',fact:'The Moon\'s far side blocks all radio from Earth, making it one of the quietest places in the solar system for radio astronomy.'}
+    ]
+  },
+  mars:{
+    name:'Mars', emoji:'🔴', days:16, diff:'Hard', g:60,
+    facts:['Gravity: 38% of Earth','Air: 95% CO₂, 1% as thick','Avg −60 °C, global dust storms','6–9 months of travel'],
+    drain:{oxygen:6,water:5,food:5,power:5,morale:2}, solar:20, risk:.2,
+    iceLine:'Ice sits just under the surface at mid and high latitudes.',
+    intro:'After seven months in transit your lander falls toward a rust-colored plain. A signal to Earth takes up to 22 minutes each way — you must decide for yourself.',
+    science:'Ancient river deltas on Mars suggest it once held liquid water — and maybe life.',
+    sites:[
+      {id:'jez',icon:'🌾',name:'Jezero Delta',x:20,y:25,cost:{power:14,oxygen:8},sci:22,mat:4,risk:.22,dmg:12,
+       desc:'A dried-up river delta that may preserve fossils.',fact:'Perseverance is exploring Jezero crater, a 3.5-billion-year-old lake bed. Delta sediments are among the best places to preserve signs of ancient life.'},
+      {id:'ice',icon:'❄️',name:'Glacier Slope',x:78,y:20,cost:{power:12,oxygen:8},sci:6,water:30,risk:.15,dmg:10,
+       desc:'A buried glacier at the base of a cliff.',fact:'Radar shows large buried ice deposits at Mars\' mid-latitudes — enough to supply future colonies with water and rocket fuel.'},
+      {id:'oly',icon:'🌋',name:'Olympus Mons Foothills',x:84,y:70,cost:{power:16,oxygen:10},sci:12,mat:14,risk:.3,dmg:16,
+       desc:'Base of the tallest volcano in the solar system.',fact:'Olympus Mons is about 22 km high — nearly three times the height of Mount Everest, and as wide as the state of Arizona.'},
+      {id:'valles',icon:'🏜️',name:'Valles Marineris',x:24,y:75,cost:{power:15,oxygen:10},sci:18,mat:6,risk:.28,dmg:14,
+       desc:'A canyon system as long as the USA is wide.',fact:'Valles Marineris stretches roughly 4,000 km and reaches 7 km deep. The Grand Canyon would fit in one of its side channels.'},
+      {id:'dune',icon:'🌪️',name:'Dune Field',x:52,y:12,cost:{power:10,oxygen:6},sci:6,mat:10,risk:.2,dmg:8,
+       desc:'Shifting sand. Watch your wheels.',fact:'Martian dunes move because of wind, even in air 100× thinner than Earth\'s. Rovers have gotten stuck in them before — Spirit was lost to a sand trap.'}
+    ]
+  },
+  europa:{
+    name:'Europa (Jupiter\'s moon)', emoji:'🧊', days:14, diff:'Expert', g:25,
+    facts:['Gravity: 13% of Earth','Ice shell over a salty ocean','Surface ≈ −160 °C','Radiation lethal in about a day'],
+    drain:{oxygen:6,water:4,food:5,power:6,morale:2}, solar:9, risk:.26,
+    iceLine:'The entire surface is ice — but sunlight is 25× weaker than at Earth.',
+    intro:'A near-future scenario: an outpost on Jupiter\'s icy moon. Sunlight is faint and Jupiter\'s radiation belts are brutal, so power and shielding come first.',
+    science:'Europa holds about twice as much water as all of Earth\'s oceans — a top place to search for life.',
+    sites:[
+      {id:'chaos',icon:'🧩',name:'Conamara Chaos',x:20,y:28,cost:{power:14,oxygen:8},sci:20,mat:6,risk:.3,dmg:18,rad:1,
+       desc:'Broken ice rafts that froze in place.',fact:'Chaos terrain looks like shattered ice floes that refroze — evidence that liquid water or warm ice rises from below.'},
+      {id:'plume',icon:'🌫️',name:'Plume Vent',x:80,y:24,cost:{power:16,oxygen:10},sci:30,water:10,risk:.4,dmg:25,rad:1,
+       desc:'Geysers may spray ocean water into space.',fact:'Hubble has hinted at water-vapor plumes on Europa. Flying through one could sample the hidden ocean without drilling.'},
+      {id:'ridge',icon:'🏔️',name:'Double Ridge',x:82,y:72,cost:{power:14,oxygen:8},sci:8,water:28,risk:.25,dmg:14,rad:1,
+       desc:'Twin ridges of clean ice.',fact:'Europa\'s double ridges can be 300 m high. Jupiter\'s tides flex the ice shell daily, creating and re-shaping them.'},
+      {id:'crater',icon:'☄️',name:'Pwyll Crater',x:22,y:76,cost:{power:12,oxygen:8},sci:10,mat:14,risk:.25,dmg:12,rad:1,
+       desc:'A fresh impact crater with ejecta.',fact:'Europa has very few craters, so its surface must be young — only about 40–90 million years old — meaning it\'s geologically active.'},
+      {id:'linea',icon:'🪢',name:'Linea Cracks',x:50,y:12,cost:{power:14,oxygen:8},sci:16,mat:6,risk:.3,dmg:15,rad:1,
+       desc:'Reddish cracks crisscross the ice.',fact:'The red-brown color of Europa\'s cracks may be salts from the ocean below, darkened by Jupiter\'s radiation.'}
+    ]
+  }
+};
+
+/* Daily actions */
+const ACTIONS = [
+  {id:'science',icon:'🔬',name:'Field Science',desc:'Experiments near the habitat.',
+    cost:{power:8,oxygen:4,water:2}, gain:{morale:3}, sci:10, risk:1},
+  {id:'mats',icon:'🧱',name:'Mine Regolith',desc:'Collect building materials.',
+    cost:{power:6,oxygen:3}, gain:{}, mat:10, risk:1,
+    fact:'Regolith is loose rock and dust. NASA is testing ways to 3D-print buildings and landing pads from it.'},
+  {id:'ice',icon:'⛏️',name:'Mine Ice',desc:'Melt local ice for water (ISRU).',
+    cost:{power:10}, gain:{water:28}, sci:1, risk:1, geo:1,
+    fact:'In-Situ Resource Utilization (ISRU) means "living off the land". Every kilogram of water made locally is one you don\'t launch from Earth — and launching costs thousands of dollars per kilogram.'},
+  {id:'oxy',icon:'🧪',name:'Electrolysis',desc:'Split 10 water into oxygen.',
+    cost:{power:8,water:10}, gain:{oxygen:30}, sci:1,
+    fact:'The ISS makes its oxygen by electrolysis of water. On Mars, the MOXIE experiment made oxygen directly from the CO₂ atmosphere.'},
+  {id:'farm',icon:'🌱',name:'Tend Greenhouse',desc:'Grow fresh food.',
+    cost:{power:6,water:6}, gain:{food:24,morale:3}, sci:3, botany:1,
+    fact:'Astronauts on the ISS have grown and eaten lettuce, radishes and chili peppers. Plants also turn CO₂ back into oxygen.'},
+  {id:'power',icon:'☀️',name:'Service Power Grid',desc:'Clean panels, recharge batteries.',
+    cost:{}, gain:{}, sci:1, special:'power'},
+  {id:'exercise',icon:'🏃',name:'Exercise',desc:'Treadmill & resistance training.',
+    cost:{power:3,water:2}, gain:{health:12}, sci:0, heal:1,
+    fact:'In low gravity, astronauts can lose 1–2% of bone mass per month. Two hours of daily exercise is mandatory on the ISS.'},
+  {id:'rest',icon:'😴',name:'Rest & Call Home',desc:'Sleep, eat well, call family.',
+    cost:{}, gain:{health:6,morale:14}, sci:0, heal:1,
+    fact:'Isolation is a real hazard. Space agencies study crews in Antarctica and sealed habitats (HI-SEAS, SIRIUS) to learn how teams stay healthy.'}
+];
+
+const BUILDINGS = [
+  {id:'solar',icon:'🔆',name:'Power Array',cost:14,desc:'Passive power each day (less in dust storms).'},
+  {id:'drill',icon:'🛢️',name:'Ice Extractor',cost:16,desc:'+9 water per day, uses 2 power.'},
+  {id:'oxy',icon:'🫧',name:'O₂ Generator',cost:16,desc:'+8 oxygen per day, uses 3 power & 2 water.'},
+  {id:'green',icon:'🥬',name:'Greenhouse Module',cost:18,desc:'+7 food per day, +1 morale, uses 2 water.'},
+  {id:'shelter',icon:'🏰',name:'Radiation Shelter',cost:22,desc:'Halves radiation damage.'},
+  {id:'rec',icon:'🎮',name:'Recreation Module',cost:12,desc:'+3 morale per day.'},
+  {id:'comm',icon:'📡',name:'Comm Array',cost:20,desc:'+3 science per day from remote data & Earth teams.'}
+];
+
+const TECHS = [
+  {id:'recycler',icon:'♻️',name:'Water Recycler',cost:15,desc:'Daily water use −2.'},
+  {id:'battery',icon:'🔋',name:'Efficient Batteries',cost:15,desc:'Daily power use −2.'},
+  {id:'nutri',icon:'🧫',name:'Nutrient Recycling',cost:20,desc:'Daily food use −2.'},
+  {id:'suits',icon:'🧑‍🚀',name:'Advanced Suits',cost:25,desc:'Outdoor accident risk −40%.'},
+  {id:'shield',icon:'🧲',name:'Magnetic Shielding',cost:30,desc:'Radiation damage −30%.'},
+  {id:'ai',icon:'🤖',name:'AI Assistant',cost:40,desc:'+1 action point each day.'}
+];
+
+const EVENTS = {
+  all:[
+    {title:'☀️ Solar Flare',text:'Mission control warns of a solar particle event arriving in 30 minutes.',
+     choices:[
+       {t:'Shelter in the shielded storm cell',e:{morale:-5,power:-4},res:'You wait it out in the water-lined safe room. Water is great radiation shielding!'},
+       {t:'Finish your outdoor task first',e:{health:-28},rad:1,sci:10,res:'You got the data but absorbed a hefty radiation dose.'}],
+     fact:'Out of Earth\'s magnetic field you face solar particles and galactic cosmic rays. Radiation is the biggest unsolved problem of deep-space travel.'},
+    {title:'🔧 Water Pump Failure',text:'A pump in the water-recycling loop is leaking.',
+     choices:[
+       {t:'Repair it now (−power)',e:{power:-10},res:'Fixed with a spare gasket.'},
+       {t:'Ignore it and ration water',e:{water:-22,morale:-4},res:'You lose water before the leak is patched.'}],
+     fact:'On the ISS, astronauts act as plumbers, electricians and doctors. Cross-training matters when help is months away.'},
+    {title:'🔊 Strange Noise',text:'A rhythmic thumping is coming from the air handling unit.',
+     choices:[
+       {t:'Inspect and clean the fan',e:{power:-4},sci:3,res:'A clogged filter. Humming again.'},
+       {t:'Turn up the music and ignore it',e:{oxygen:-15},res:'The fan was failing — you lost air circulation.'}],
+     fact:'Without convection in microgravity, stale air doesn\'t rise, so fans keep CO₂ from pooling around astronauts\' faces.'},
+    {title:'📡 Message From Earth',text:'Schoolchildren around the world send messages of encouragement.',
+     choices:[{t:'Read them aloud 🥹',e:{morale:18},res:'Morale soars.'}],
+     fact:'Many scientists and engineers say Apollo inspired their careers. Space exploration inspires the next generation.'},
+    {title:'💎 Lucky Find',text:'Your rover spots a layered rock outcrop nearby.',
+     choices:[
+       {t:'Study it carefully (−power)',e:{power:-6},sci:18,res:'The layers reveal ancient geological history!'},
+       {t:'Quick photo and move on',e:{},sci:6,res:'A decent photo for the scientists back home.'}],
+     fact:'Layered rocks are history books. Geologists read them to understand how planets form and change.'},
+    {title:'😤 Crew Tension',text:'Months of confinement are fraying nerves. Small arguments are growing.',
+     choices:[
+       {t:'Hold a team dinner',e:{food:-6,morale:14},res:'A shared meal reminds everyone they\'re a team.'},
+       {t:'Push on with work',e:{morale:-14},sci:6,res:'Productivity — at a cost to the mood.'}],
+     fact:'Psychologists study crews in isolation. Good communication, privacy and shared rituals are key for long missions.'},
+    {title:'💥 Airlock Seal Alarm',text:'The inner airlock door isn\'t sealing properly.',
+     choices:[
+       {t:'Replace the seal',e:{power:-5,oxygen:-3},res:'A fresh gasket holds pressure.'},
+       {t:'Tape it up and hope',e:{oxygen:-24},res:'The patch fails, venting air.'}],
+     fact:'Spacecraft hatches are tested to hold pressure for years. Even a pinhole leak can slowly deplete a habitat.'}
+  ],
+  moon:[
+    {title:'🌫️ Lunar Dust Attack',text:'Razor-sharp, statically charged dust is clinging to your suit and may clog the airlock seals.',
+     choices:[
+       {t:'Thorough cleaning routine',e:{power:-5,water:-3},res:'Seals stay clean.'},
+       {t:'Quick brush-off',e:{health:-12,oxygen:-10},res:'Fine dust seeps inside — coughing and a small air leak.'}],
+     fact:'Apollo astronauts reported "lunar hay fever" and suit fabric worn by dust. It\'s a top engineering challenge for modern lunar missions.'},
+    {title:'💫 Micrometeorite Strike',text:'With no atmosphere, tiny rocks hit at tens of thousands of km/h. One hits a solar panel.',
+     choices:[{t:'Patch the panel outside',e:{power:-12,oxygen:-4},res:'Panel patched.'},
+              {t:'Run on reduced power',e:{power:-20},res:'You lose generation capacity.'}],
+     fact:'Earth\'s atmosphere burns up most space debris. On the Moon, habitats need thick walls or can be buried under regolith.'},
+    {title:'🌑 Long Night Falls',text:'The Sun sets for many Earth days at your latitude. Solar power drops.',
+     choices:[{t:'Switch to battery saver mode',e:{power:-14,morale:-4},res:'You conserve energy, but the habitat is cold and dim.'}],
+     fact:'A lunar day lasts ~29.5 Earth days. Sites with near-constant sunlight on high "peaks of eternal light" are prime for bases.'}
+  ],
+  mars:[
+    {title:'🌪️ Global Dust Storm',text:'A planet-wide dust storm darkens the sky. Solar panels barely work for days.',storm:3,
+     choices:[{t:'Hunker down and wait',e:{power:-18,morale:-8},storm:3,res:'It blows for days. You survive on batteries.'},
+              {t:'Run the backup fission reactor',e:{power:-5,health:-4},storm:3,res:'Kilopower-style fission gives steady energy. Nervous, but it works.'}],
+     fact:'In 2018 a dust storm ended NASA\'s solar-powered Opportunity rover after 15 years. Nuclear power is likely essential for long Mars stays.'},
+    {title:'☠️ Toxic Soil',text:'Tests show Martian soil contains perchlorates — toxic salts that could poison your crops.',
+     choices:[{t:'Wash the soil first',e:{water:-12,power:-3},sci:6,res:'The washed soil is safe.'},
+              {t:'Plant anyway',e:{food:-18,health:-8},res:'The crops fail and you feel sick.'}],
+     fact:'Perchlorates were found by NASA\'s Phoenix lander in 2008. Washing or bacteria can remove them.'},
+    {title:'⏳ Comms Delay',text:'Mission control is 20 light-minutes away. A tricky decision can\'t wait.',
+     choices:[{t:'Trust the crew\'s training',e:{morale:6},sci:5,res:'Autonomy pays off.'},
+              {t:'Wait for instructions',e:{power:-8,food:-8},res:'Hours of delay burn resources.'}],
+     fact:'Unlike Apollo, Mars crews can\'t get real-time help, so they need self-reliant tools and training.'},
+    {title:'🌬️ MOXIE Opportunity',text:'Your oxygen-from-CO₂ experiment is working better than expected.',
+     choices:[{t:'Scale it up',e:{power:-8,oxygen:25},res:'You turn the thin CO₂ atmosphere into breathable oxygen.'}],
+     fact:'NASA\'s MOXIE on Perseverance made oxygen from Martian CO₂ 16 times. A scaled version could supply astronauts and rocket fuel.'}
+  ],
+  europa:[
+    {title:'☢️ Jupiter Radiation Belt',text:'Jupiter\'s magnetosphere flares. Radiation spikes even inside the habitat.',
+     choices:[{t:'Retreat to the ice-shielded bunker',e:{morale:-8,power:-6},res:'Ice makes superb shielding.'},
+              {t:'Keep working',e:{health:-30},rad:1,sci:12,res:'Great data, terrible dose.'}],
+     fact:'Europa\'s surface gets roughly 5 Sv/day of radiation — lethal to humans in about a day. That\'s why shielding and robots are vital.'},
+    {title:'🧊 Ice Quake',text:'Jupiter\'s tides crack the ice near your lander.',
+     choices:[{t:'Sample the fresh crack',e:{oxygen:-6,power:-4},sci:22,res:'Briny ice from below — maybe biosignatures!'},
+              {t:'Move the habitat',e:{power:-14},res:'A tiring relocation, but safe.'}],
+     fact:'Jupiter\'s gravity flexes Europa, heating its interior. Cracks and plumes may give free samples from the ocean below.'},
+    {title:'🌑 Faint Sunlight',text:'Sunlight at Jupiter is ~4% of Earth\'s. Your arrays underperform.',
+     choices:[{t:'Deploy extra panels',e:{power:-10,oxygen:-3},res:'More panels, a bit more power.'},
+              {t:'Shut non-essential systems',e:{morale:-10,power:-4},res:'Cold, dark, and glum.'}],
+     fact:'NASA\'s Juno uses giant solar panels at Jupiter, while Voyager and Cassini used radioisotope generators.'}
+  ]
+};
+
+const QUIZ = [
+  {q:'Why is the Moon\'s south pole a prime landing target?',a:'Water ice sits in permanently shadowed craters',w:['It has the warmest weather','It has a breathable atmosphere','It is closest to Earth'],why:'Ice can be melted for water and split into oxygen and hydrogen fuel.'},
+  {q:'What does ISRU stand for?',a:'In-Situ Resource Utilization',w:['International Space Research Unit','Interplanetary Solar Rocket Unit','Integrated Shuttle Repair Utility'],why:'ISRU means using local resources instead of launching everything from Earth.'},
+  {q:'How strong is Mars\' gravity compared to Earth\'s?',a:'About 38%',w:['About 10%','About 75%','The same'],why:'You could jump about 2.5× higher on Mars — but muscles and bones still weaken over time.'},
+  {q:'Which is a major danger once astronauts leave Earth\'s magnetic field?',a:'Cosmic and solar radiation',w:['Acid rain','Ocean tides','Hurricanes'],why:'Earth\'s magnetic field and atmosphere shield us; deep space has no such protection.'},
+  {q:'A radio signal from Mars to Earth takes about…',a:'3 to 22 minutes',w:['Instantly','About 1 second','About 3 days'],why:'Light-speed delay means Mars crews can\'t have real-time conversations with Earth.'},
+  {q:'What is Mars\' atmosphere mostly made of?',a:'Carbon dioxide',w:['Oxygen','Nitrogen','Methane'],why:'About 95% CO₂ — which is why MOXIE can make oxygen from it.'},
+  {q:'About how much of its water does the ISS recycle?',a:'About 90%',w:['About 10%','About 50%','None'],why:'Every recycled litre is one less to launch from Earth.'},
+  {q:'Why do astronauts exercise about two hours daily?',a:'To fight bone and muscle loss',w:['To generate electricity','Just for fun','To stay warm'],why:'Low gravity makes bones and muscles weaken quickly without resistance.'},
+  {q:'What may lie beneath Europa\'s icy shell?',a:'A global salty ocean',w:['A molten core only','A dense forest','Nothing at all'],why:'Europa likely has more liquid water than all of Earth\'s oceans combined.'},
+  {q:'Which NASA program aims to return humans to the Moon?',a:'Artemis',w:['Apollo 2','Voyager','Hubble'],why:'Artemis plans a sustained presence at the lunar south pole.'},
+  {q:'Why is lunar dust a problem?',a:'It is sharp, sticky and abrasive',w:['It is radioactive','It is wet','It explodes in sunlight'],why:'With no weathering, grains stay jagged and cling to everything via static charge.'},
+  {q:'Which everyday item uses a sensor invented at NASA\'s JPL?',a:'Smartphone camera',w:['Microwave oven','Bicycle','Wristwatch'],why:'The CMOS active-pixel sensor was developed to make spacecraft cameras smaller.'},
+  {q:'How long is one lunar day-night cycle?',a:'About 29.5 Earth days',w:['24 hours','About 3 days','About 1 year'],why:'The Moon rotates once per orbit, so one side faces the Sun for ~two weeks.'},
+  {q:'Why is water a good radiation shield?',a:'Hydrogen atoms block particles well',w:['It is cold','It is transparent','It is heavy'],why:'Hydrogen-rich materials are among the best at stopping charged particles.'},
+  {q:'What is the "Overview Effect"?',a:'Astronauts\' awe seeing Earth as a fragile whole',w:['A telescope trick','A rocket engine','A space illness'],why:'Many astronauts report a lasting shift in perspective about our planet.'}
+];
+
+const SPINOFFS = [
+  {at:10,icon:'🏥',name:'Better Medical Imaging',txt:'Digital image processing developed for Apollo-era imagery now powers CT and MRI scans.'},
+  {at:30,icon:'💧',name:'Water Purification',txt:'Spacecraft water-recycling tech now provides clean drinking water in remote villages.'},
+  {at:50,icon:'📷',name:'Phone Camera Sensors',txt:'The CMOS image sensor was invented at JPL for tiny spacecraft cameras. It\'s in every smartphone.'},
+  {at:80,icon:'🛰️',name:'GPS & Satellites',txt:'Navigation, weather forecasts and global communications depend on space technology.'},
+  {at:110,icon:'🌍',name:'Climate Science',txt:'Studying Venus and Mars helps us understand climate change on Earth.'},
+  {at:140,icon:'🧬',name:'Search for Life',txt:'Finding life elsewhere would reshape biology and answer one of humanity\'s biggest questions.'},
+  {at:180,icon:'☄️',name:'Planetary Defense',txt:'In 2022 NASA\'s DART mission nudged an asteroid\'s orbit — a test of defending Earth.'}
+];
+
+const ACHIEVEMENTS = {
+  landing:{icon:'🎯',name:'Perfect Landing',txt:'Land softly on the pad.'},
+  first:{icon:'👣',name:'First Steps',txt:'Complete an expedition.'},
+  explorer:{icon:'🧭',name:'Explorer',txt:'Visit every site on the map.'},
+  builder:{icon:'🏗️',name:'Base Builder',txt:'Construct 4 buildings.'},
+  scholar:{icon:'🎓',name:'Mission Scholar',txt:'Answer 4 quiz questions correctly.'},
+  tech:{icon:'🧪',name:'Innovator',txt:'Research 3 technologies.'},
+  survivor:{icon:'🏅',name:'Survivor',txt:'Complete the mission.'},
+  greens:{icon:'🌱',name:'Green Thumb',txt:'Harvest 5 times.'}
+};
+
+const GENERAL_FACTS = [
+  'Space exploration has produced thousands of spin-off technologies, from memory foam to scratch-resistant lenses.',
+  'The ISS has been continuously inhabited since November 2000.',
+  'Unprotected in a vacuum you would lose consciousness in about 10–15 seconds.',
+  'Rockets must reach ~28,000 km/h to stay in orbit around Earth.',
+  'Every astronaut is supported by thousands of engineers, scientists, doctors and teachers.',
+  'Liquids behave strangely in space: without gravity, water forms floating spheres held by surface tension.'
+];
+
+/* ============ state ============ */
+let G = null, scr = 'menu';
+let setup = {name:'Commander', crew:'engineer', diff:'normal', load:new Set()};
+
+function mods(){
+  const t=G.tech, b=G.build, c=G.crew, l=G.load;
+  return {
+    risk: (t.has('suits')?.6:1) * (l.has('rover')?.8:1) * DIFFS[G.diff].risk,
+    rad: (b.has('shelter')?.5:1) * (t.has('shield')?.7:1) * (l.has('shield')?.75:1) * (c==='doctor'?.7:1),
+    sci: c==='geologist'?1.4:1,
+    cost: c==='engineer'?.7:1,
+    heal: c==='doctor'?1.5:1,
+    farm: c==='botanist'?1.5:1,
+    ap: 3 + (t.has('ai')?1:0)
+  };
+}
 
 function newGame(key){
-  const d = DESTINATIONS[key];
-  G = {key, d, day:1, ap:2, sci:0, over:false, event:null, awaitingEvent:false,
-    s:{oxygen:80,water:75,food:75,power:80,health:100,morale:80},
-    log:[`🛬 Day 1: ${d.intro}`], unlocked:new Set(), seen:new Set(), lastFact:null, solarMult:1};
-  render();
+  const d = DESTS[key], l = setup.load;
+  G = {key, d, name:setup.name.trim()||'Commander', crew:setup.crew, diff:setup.diff, load:new Set(l),
+    day:0, ap:3, sci:0, spent:0, seen:new Set(), mat:l.has('mats')?12:0, over:false, event:null, tab:'actions', selSite:null,
+    s:{oxygen:70+(l.has('o2')?15:0), water:65+(l.has('h2o')?15:0), food:65+(l.has('food')?15:0),
+       power:70+(l.has('solar')?15:0), health:100, morale:80},
+    tech:new Set(), build:new Set(), visited:new Set(), codex:new Map(), ach:new Set(),
+    unlocked:new Set(), quizRight:0, quizTotal:0, harvests:0, storm:0, landing:null,
+    log:[], lastFact:null, rover:{x:0.62,target:0.62,t:0}};
+  G.ap = mods().ap;
+  scr='land'; render();
 }
 
-function applyDelta(delta){
-  for(const k in delta){ G.s[k] = clamp(G.s[k] + delta[k]); }
+function applyDelta(delta, rad){
+  const m=mods();
+  for(const k in delta){
+    let v=delta[k];
+    if(k==='health' && v<0 && rad) v*=m.rad;
+    if(k==='health' && v>0) v*=m.heal;
+    G.s[k]=clamp(G.s[k]+v);
+  }
 }
 function log(msg){ G.log.unshift(msg); }
-
-/* ---------- rendering ---------- */
-function bar(k){
-  const v = Math.round(G.s[k]);
-  const col = v>50?'var(--good)':v>25?'var(--warn)':'var(--bad)';
-  return `<div class="bar"><div class="lbl"><span>${STATS[k].icon} ${STATS[k].label}</span><span>${v}</span></div>
-    <div class="track"><div class="fill" style="width:${v}%;background:${col}"></div></div></div>`;
+function learn(fact){ if(!fact) return; G.lastFact=fact; if(!G.codex.has(fact)) G.codex.set(fact,G.day); }
+function ach(id){
+  if(G.ach.has(id)) return;
+  G.ach.add(id); const a=ACHIEVEMENTS[id];
+  toast(`🏆 Achievement: <b>${a.icon} ${a.name}</b>`); beep(880,.2,'triangle');
+}
+function addSci(n){
+  G.sci += n;
+  for(const s of SPINOFFS) if(G.sci>=s.at && !G.unlocked.has(s.name)){
+    G.unlocked.add(s.name); log(`🎉 Discovery unlocked: ${s.icon} ${s.name}`); toast(`🎉 ${s.icon} <b>${s.name}</b> unlocked`);
+  }
 }
 
+/* ============ render dispatcher ============ */
+function render(){
+  $('#sceneWrap').classList.toggle('hidden', scr!=='surface');
+  if(scr!=='land') stopLander();
+  if(scr==='menu') return renderMenu();
+  if(scr==='brief') return renderBrief();
+  if(scr==='land') return renderLand();
+  if(scr==='surface') return renderSurface();
+  if(scr==='end') return renderEnd();
+}
+
+/* ---------- menu ---------- */
 function renderMenu(){
+  const hs = store.get('hs',{});
   app.innerHTML = `
   <div class="card">
     <h2>Choose your destination</h2>
-    <p class="sub">Each world has different dangers. Survive until the end of the mission, gather science, and bring your discoveries home.</p>
+    <p class="sub">Each world has different dangers. Survive, explore, build a base and bring discoveries home.</p>
     <div class="grid">
-      ${Object.entries(DESTINATIONS).map(([k,d])=>`
-        <button class="dest" onclick="newGame('${k}')">
+      ${Object.entries(DESTS).map(([k,d])=>`
+        <button class="dest" onclick="pickDest('${k}')">
           <span class="emoji">${d.emoji}</span>
-          <b style="font-size:1.15rem">${d.name}</b>
-          <span class="tag">${d.difficulty} · ${d.days} days</span>
+          <b style="font-family:var(--display)">${d.name}</b>
+          <span><span class="tag">${d.diff}</span><span class="tag">${d.days} days</span>${hs[k]?`<span class="tag">🏆 best ${hs[k]}</span>`:''}</span>
           <ul>${d.facts.map(f=>`<li>${f}</li>`).join('')}</ul>
           <small style="color:var(--muted)">${d.iceLine}</small>
         </button>`).join('')}
     </div>
   </div>
   <div class="card">
-    <h2>How to play</h2>
-    <ul style="color:var(--muted);line-height:1.6;margin:0;padding-left:20px">
-      <li>Each day you have <b class="ap">2 action points</b>. Choose how to spend them.</li>
-      <li>Every day your crew uses oxygen, water, food and power — even more with hard work.</li>
-      <li>If oxygen, water, food or health hits <b>0</b>, the mission fails. If power hits 0, life support suffers.</li>
-      <li>Random events test your decisions. Learn the real science behind each one!</li>
-      <li>Science points unlock real technologies that space research gave to everyday life on Earth.</li>
-    </ul>
+    <h2>How a mission works</h2>
+    <ol style="color:var(--muted);line-height:1.7;margin:0;padding-left:20px">
+      <li><b>Brief:</b> pick your crew specialty, difficulty and a limited cargo loadout.</li>
+      <li><b>Land:</b> fly the lander yourself — gravity differs on every world.</li>
+      <li><b>Survive:</b> spend action points each day on science, mining, farming and repairs.</li>
+      <li><b>Explore:</b> drive the rover to map sites for science and resources.</li>
+      <li><b>Build &amp; research:</b> expand the base and unlock technology.</li>
+      <li><b>Learn:</b> answer mission-control quizzes and read real science from your Codex.</li>
+    </ol>
   </div>`;
 }
+function pickDest(k){ setup.dest=k; scr='brief'; render(); }
 
-function renderGame(){
-  const d=G.d;
-  const crit = Object.keys(G.s).filter(k=>['oxygen','water','food','health'].includes(k) && G.s[k]<25);
+/* ---------- briefing ---------- */
+function loadSpent(){ return [...setup.load].reduce((a,id)=>a+LOADOUT.find(x=>x.id===id).cost,0); }
+function renderBrief(){
+  const d=DESTS[setup.dest];
   app.innerHTML = `
   <div class="card">
-    <div class="top">
-      <div><b>${d.emoji} ${d.name}</b> <span class="tag">Day ${G.day} / ${d.days}</span></div>
-      <div>🔬 Science: <b>${G.sci}</b> &nbsp; <span class="ap">Actions left today: ${G.ap}</span></div>
-    </div>
-    <div class="bars">${Object.keys(STATS).map(bar).join('')}</div>
-    ${crit.length?`<div class="fact" style="border-color:var(--bad)"><b style="color:var(--bad)">⚠ Warning:</b> ${crit.map(k=>STATS[k].label).join(', ')} critically low!</div>`:''}
+    <h2>${d.emoji} Mission Briefing — ${d.name}</h2>
+    <p>${d.intro}</p>
+    <label class="sub" for="nm">Astronaut name</label>
+    <input id="nm" type="text" maxlength="18" value="${setup.name.replace(/"/g,'')}" oninput="setup.name=this.value">
   </div>
-  ${G.event ? renderEvent() : renderActions()}
-  ${G.lastFact?`<div class="fact"><b>💡 Did you know?</b> ${G.lastFact}</div>`:''}
   <div class="card">
-    <b>📓 Mission log</b>
-    <div class="log">${G.log.slice(0,25).map(l=>`<p>${l}</p>`).join('')}</div>
-  </div>`;
-}
-
-function renderActions(){
-  return `<div class="card">
-    <h2>What will you do?</h2>
-    <div class="actions">
-    ${ACTIONS.map(a=>{
-      const ok = Object.entries(a.cost).every(([k,v])=>G.s[k]>=v);
-      const cost = Object.entries(a.cost).map(([k,v])=>`−${v} ${STATS[k].icon}`).join(' ');
-      let gain = Object.entries(a.gain).map(([k,v])=>`+${v} ${STATS[k].icon}`).join(' ');
-      if(a.special==='power') gain = `+${Math.round(G.d.solar)} ⚡`;
-      if(a.sci>=5) gain += ` +${a.sci} 🔬`;
-      return `<button onclick="doAction('${a.id}')" ${ok&&G.ap>0?'':'disabled'}>
-        <b>${a.icon} ${a.name}</b><small>${a.desc}</small><br><small>${cost} ${cost&&gain?'→':''} ${gain}</small></button>`;
+    <h2>Crew specialty</h2>
+    <div class="grid">${Object.entries(CREW).map(([k,c])=>`
+      <button class="${setup.crew===k?'sel':''}" onclick="setup.crew='${k}';renderBrief()">
+        <b>${c.icon} ${c.name}</b><br><small style="color:var(--muted)">${c.desc}</small></button>`).join('')}</div>
+  </div>
+  <div class="card">
+    <h2>Cargo loadout <span class="tag">${LOAD_BUDGET-loadSpent()} / ${LOAD_BUDGET} mass points left</span></h2>
+    <p class="sub">Every kilogram launched costs a fortune, so you can't take everything. Choose wisely!</p>
+    ${LOADOUT.map(l=>{
+      const on=setup.load.has(l.id), can=on||loadSpent()+l.cost<=LOAD_BUDGET;
+      return `<label class="opt ${on?'on':''}" style="${can?'':'opacity:.4'}">
+        <input type="checkbox" ${on?'checked':''} ${can?'':'disabled'} onchange="toggleLoad('${l.id}')">
+        <span><b>${l.icon} ${l.name}</b> <span class="tag">${l.cost} pts</span><br><small style="color:var(--muted)">${l.desc}</small></span></label>`;
     }).join('')}
-    </div>
-    <div class="row" style="margin-top:12px">
-      <button class="primary" onclick="endDay()">🌙 End Day ${G.ap>0?'(skip remaining actions)':''}</button>
-    </div>
+  </div>
+  <div class="card">
+    <h2>Difficulty</h2>
+    <select onchange="setup.diff=this.value">${Object.entries(DIFFS).map(([k,v])=>`<option value="${k}" ${setup.diff===k?'selected':''}>${v.name}</option>`).join('')}</select>
+  </div>
+  <div class="row">
+    <button onclick="scr='menu';render()">◀ Back</button>
+    <button class="primary" style="flex:1;padding:14px" onclick="newGame('${setup.dest}')">🚀 LAUNCH MISSION</button>
   </div>`;
 }
+function toggleLoad(id){ setup.load.has(id)?setup.load.delete(id):setup.load.add(id); renderBrief(); }
 
-function renderEvent(){
-  const e=G.event;
-  return `<div class="card" style="border-color:var(--warn)">
-    <h2>⚠ ${e.title}</h2>
-    <p>${e.text}</p>
-    <div class="choices">${e.choices.map((c,i)=>`<button onclick="chooseEvent(${i})">${c.t}</button>`).join('')}</div>
-  </div>`;
+/* ---------- landing minigame ---------- */
+let L=null, landRAF=0;
+function stopLander(){ cancelAnimationFrame(landRAF); landRAF=0; removeEventListener('keydown',lKey); removeEventListener('keyup',lKey); }
+function lKey(e){
+  if(!L) return; const dn = e.type==='keydown';
+  if(['ArrowUp','ArrowLeft','ArrowRight',' ','w','a','d'].includes(e.key)) e.preventDefault();
+  if(e.key==='ArrowUp'||e.key===' '||e.key==='w') L.up=dn;
+  if(e.key==='ArrowLeft'||e.key==='a') L.left=dn;
+  if(e.key==='ArrowRight'||e.key==='d') L.right=dn;
 }
-
-function render(){
-  if(!G) return renderMenu();
-  if(G.over) return renderEnd();
-  renderGame();
-}
-
-/* ---------- game logic ---------- */
-function doAction(id){
-  const a = ACTIONS.find(x=>x.id===id);
-  if(!a || G.ap<=0) return;
-  if(!Object.entries(a.cost).every(([k,v])=>G.s[k]>=v)) return;
-  G.ap--;
-  for(const k in a.cost) G.s[k] = clamp(G.s[k]-a.cost[k]);
-  applyDelta(a.gain);
-  if(a.special==='power') applyDelta({power:G.d.solar});
-  G.sci += a.sci;
-  let msg = `${a.icon} ${a.name}.`;
-  if(a.sci>=5) msg += ` +${a.sci} science.`;
-  if(a.risk && Math.random()<G.d.exploreRisk){
-    const dmg = 6+Math.floor(Math.random()*10);
-    applyDelta({health:-dmg});
-    msg += ` 😬 Minor accident outside! −${dmg} health.`;
-  }
-  log(msg);
-  if(a.fact) G.lastFact = a.fact;
-  checkUnlocks();
-  if(checkFail()) return render();
-  render();
-}
-
-function endDay(){
+function renderLand(){
   const d=G.d;
-  // daily consumption, scaled up when stressed
-  const dr = d.drain;
-  for(const k in dr) G.s[k] = clamp(G.s[k]-dr[k]);
-  let note = `🌙 End of day ${G.day}: crew used supplies.`;
-  if(G.s.power<=0){
-    applyDelta({oxygen:-14,health:-6});
-    note += ' ⚠ Power outage: life support is failing!';
-  }
-  if(G.s.morale<20){ applyDelta({health:-4}); note += ' 😟 Low morale is hurting your health.'; }
-  if(G.s.oxygen<15||G.s.water<15||G.s.food<15){ applyDelta({health:-6}); note += ' Shortages are hurting your health.'; }
-  // natural recovery
-  applyDelta({health:2});
-  log(note);
-  if(checkFail()) return render();
-  if(G.day>=d.days){ G.over=true; G.win=true; return render(); }
-  G.day++; G.ap=2;
-  log(`☀️ Day ${G.day} begins.`);
-  if(Math.random()<.65){
-    const pool = EVENTS.all.concat(EVENTS[G.key]);
-    const fresh = pool.filter(e=>!G.seen.has(e.title));
-    G.event = pick(fresh.length?fresh:pool);
-    G.seen.add(G.event.title);
-  } else if(Math.random()<.4) G.lastFact = pick(GENERAL_FACTS);
-  render();
+  app.innerHTML = `
+  <div class="card">
+    <h2>${d.emoji} Descent to ${d.name}</h2>
+    <p class="sub">Gravity here is <b>${({moon:1.62,mars:3.71,europa:1.31}[G.key]).toFixed(2)} m/s²</b>. Use the main engine (<b>↑ / Space</b>) and side thrusters (<b>← →</b>) to land gently on the <span style="color:var(--good)">green pad</span>. Slow down below the speed limit!</p>
+    <div class="lander-wrap"><canvas id="lc" width="760" height="380"></canvas></div>
+    <div class="ctrl">
+      <button id="bL">◀</button><button id="bU">▲</button><button id="bR">▶</button>
+    </div>
+    <div class="row" style="margin-top:12px;justify-content:space-between">
+      <small class="sub" id="lhud"></small>
+      <button onclick="finishLanding('assist')">🤖 Let autopilot land (rough)</button>
+    </div>
+  </div>`;
+  const gx=d.g;
+  const pts=[]; const N=40; let padI=Math.floor(rnd(8,N-10));
+  for(let i=0;i<=N;i++){ pts.push(320+Math.sin(i*.7)*12+Math.sin(i*.31)*18+rnd(-4,4)); }
+  for(let i=padI;i<padI+5;i++) pts[i]=335;
+  L={x:rnd(120,640),y:30,vx:rnd(-25,25),vy:40,fuel:100,up:false,left:false,right:false,pts,N,padI,padW:5,done:false,g:gx,last:performance.now(),dust:[]};
+  const bind=(id,k)=>{ const b=$('#'+id); const on=v=>e=>{e.preventDefault();L[k]=v;}; b.onpointerdown=on(true); b.onpointerup=on(false); b.onpointerleave=on(false); b.onpointercancel=on(false); };
+  bind('bL','left'); bind('bU','up'); bind('bR','right');
+  addEventListener('keydown',lKey); addEventListener('keyup',lKey);
+  landRAF=requestAnimationFrame(landLoop);
 }
-
-function chooseEvent(i){
-  const e=G.event, c=e.choices[i];
-  applyDelta(c.e||{});
-  if(c.sci){ G.sci+=c.sci; }
-  log(`⚠ ${e.title.replace(/ [^\w ]+$/u,'')}: ${c.res}`);
-  G.lastFact = e.fact;
-  G.event=null;
-  checkUnlocks();
-  if(checkFail()) return render();
-  render();
+function terrainY(x){
+  const W=760, i=x/W*L.N, a=Math.floor(i), f=i-a;
+  const p0=L.pts[clamp(a,0,L.N)], p1=L.pts[clamp(a+1,0,L.N)];
+  return p0+(p1-p0)*f;
 }
-
-function checkUnlocks(){
-  for(const s of SPINOFFS){
-    if(G.sci>=s.at && !G.unlocked.has(s.name)){
-      G.unlocked.add(s.name);
-      log(`🎉 Discovery unlocked: ${s.icon} ${s.name}!`);
+function landLoop(now){
+  if(!L||scr!=='land') return;
+  const dt=Math.min(.05,(now-L.last)/1000); L.last=now;
+  const c=$('#lc'); if(!c) return; const x=c.getContext('2d');
+  if(!L.done){
+    L.vy += L.g*dt;
+    if(L.up && L.fuel>0){ L.vy -= 110*dt; L.fuel-=14*dt; if(Math.random()<.6)L.dust.push({x:L.x,y:L.y+16,vx:rnd(-20,20),vy:rnd(40,100),l:.5}); }
+    if(L.left && L.fuel>0){ L.vx -= 55*dt; L.fuel-=5*dt; }
+    if(L.right && L.fuel>0){ L.vx += 55*dt; L.fuel-=5*dt; }
+    L.fuel=Math.max(0,L.fuel);
+    L.x+=L.vx*dt; L.y+=L.vy*dt;
+    if(L.x<10){L.x=10;L.vx=Math.abs(L.vx)*.3} if(L.x>750){L.x=750;L.vx=-Math.abs(L.vx)*.3}
+    const gy=terrainY(L.x);
+    if(L.y+16>=gy){
+      L.done=true; L.y=gy-16;
+      const onPad = L.x>=L.padI/L.N*760 && L.x<=(L.padI+L.padW)/L.N*760;
+      const sp=Math.abs(L.vy), hs=Math.abs(L.vx);
+      let r;
+      if(sp<30 && hs<22) r = onPad?'perfect':'offpad';
+      else if(sp<70 && hs<45) r = onPad?'hard':'hardoff';
+      else r='crash';
+      setTimeout(()=>finishLanding(r),700);
     }
   }
+  // draw
+  x.clearRect(0,0,760,380);
+  const sky = G.key==='mars' ? ['#7d3f26','#d9946a'] : ['#000208','#0b1130'];
+  const gr=x.createLinearGradient(0,0,0,380); gr.addColorStop(0,sky[0]); gr.addColorStop(1,sky[1]); x.fillStyle=gr; x.fillRect(0,0,760,380);
+  x.fillStyle='rgba(255,255,255,.7)';
+  for(let i=0;i<50;i++){ const sx=(i*137)%760, sy=(i*71)%240; if(G.key!=='mars') x.fillRect(sx,sy,1.5,1.5); }
+  if(G.key==='europa'){ x.fillStyle='#d9a066'; x.beginPath(); x.arc(560,70,60,0,7); x.fill(); x.fillStyle='rgba(120,60,30,.5)'; x.fillRect(500,60,120,8); x.fillRect(505,80,110,6);}
+  if(G.key==='moon'){ x.fillStyle='#3a7bd5'; x.beginPath(); x.arc(620,60,22,0,7); x.fill(); x.fillStyle='#fff8'; x.fillRect(606,56,18,4); }
+  // terrain
+  const gcol = G.key==='mars'?'#a8512c':G.key==='europa'?'#cfe3ee':'#8d8d95';
+  x.fillStyle=gcol; x.beginPath(); x.moveTo(0,380);
+  for(let i=0;i<=L.N;i++) x.lineTo(i/L.N*760,L.pts[i]); x.lineTo(760,380); x.closePath(); x.fill();
+  const px0=L.padI/L.N*760, px1=(L.padI+L.padW)/L.N*760;
+  x.fillStyle='#3ddc97'; x.fillRect(px0,L.pts[L.padI]-3,px1-px0,5);
+  // dust
+  for(const p of L.dust){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.l-=dt; x.fillStyle=`rgba(255,200,120,${Math.max(0,p.l)})`; x.fillRect(p.x,p.y,3,3); }
+  L.dust=L.dust.filter(p=>p.l>0);
+  // lander
+  x.save(); x.translate(L.x,L.y);
+  const crashed = L.done && !(Math.abs(L.vy)<70);
+  if(!crashed){
+    x.fillStyle='#d6dcff'; x.beginPath(); x.moveTo(-12,-14); x.lineTo(12,-14); x.lineTo(16,8); x.lineTo(-16,8); x.closePath(); x.fill();
+    x.fillStyle='#35e0ff'; x.beginPath(); x.arc(0,-6,5,0,7); x.fill();
+    x.strokeStyle='#d6dcff'; x.lineWidth=3; x.beginPath(); x.moveTo(-14,8); x.lineTo(-22,16); x.moveTo(14,8); x.lineTo(22,16); x.stroke();
+    if(L.up&&L.fuel>0&&!L.done){ x.fillStyle='#ffb347'; x.beginPath(); x.moveTo(-6,10); x.lineTo(6,10); x.lineTo(0,10+rnd(14,26)); x.fill(); }
+    if(L.left&&L.fuel>0&&!L.done){ x.fillStyle='#ffb347'; x.fillRect(14,-4,rnd(8,14),4); }
+    if(L.right&&L.fuel>0&&!L.done){ x.fillStyle='#ffb347'; x.fillRect(-14-rnd(8,14),-4,12,4); }
+  } else { x.fillStyle='#ff5d6c'; x.fillRect(-14,-4,28,12); x.fillStyle='#ffb347'; x.beginPath(); x.arc(0,-4,16,0,7); x.fill(); }
+  x.restore();
+  // hud
+  const sp=Math.abs(L.vy), ok=sp<30;
+  const h=$('#lhud'); if(h) h.innerHTML = `Fall speed: <b style="color:${ok?'var(--good)':sp<70?'var(--warn)':'var(--bad)'}">${sp.toFixed(0)}</b> (safe &lt; 30) · Drift: <b>${Math.abs(L.vx).toFixed(0)}</b> · Fuel: <b>${L.fuel.toFixed(0)}%</b>`;
+  landRAF=requestAnimationFrame(landLoop);
+}
+function finishLanding(r){
+  if(G.landing) return; G.landing=r; stopLander();
+  const R={
+    perfect:{t:'🎯 Perfect landing! Everything is intact and you even salvage spare parts.',e:{},mat:8},
+    offpad:{t:'✅ Soft landing, but off the pad — a long walk back to the cargo.',e:{power:-8,oxygen:-6}},
+    hard:{t:'⚠ Hard landing on the pad. Some systems are shaken.',e:{health:-10,power:-8}},
+    hardoff:{t:'⚠ Hard, off-target landing. Equipment is damaged.',e:{health:-14,power:-12,oxygen:-6}},
+    crash:{t:'💥 Crash landing! The cabin held, but supplies and your health took a beating.',e:{health:-35,oxygen:-14,power:-18}},
+    assist:{t:'🤖 Autopilot landed you — roughly. Systems shaken.',e:{health:-8,power:-8}}
+  }[r];
+  applyDelta(R.e); if(R.mat) G.mat+=R.mat;
+  if(r==='perfect') ach('landing');
+  G.day=1; G.ap=mods().ap;
+  log(`🛬 Day 1: ${R.t}`); log(`📖 ${G.d.intro}`);
+  learn(r==='perfect'?'Landing on another world is the riskiest part: Apollo 11\'s Eagle landed with seconds of fuel to spare after astronauts took manual control.':'Landers must brake from thousands of km/h to a walking pace. With no atmosphere on the Moon, only engines can slow the descent; Mars\'s thin air barely helps.');
+  if(checkFail()) { return render(); }
+  scr='surface'; render();
+  const r2=R.t; toast(r2);
 }
 
-function checkFail(){
-  const reasons = {
-    oxygen:'You ran out of breathable oxygen. In space, air is life — production and recycling must always outpace use.',
-    water:'Dehydration ended the mission. Water is heavy to launch, so astronauts recycle it and mine local ice.',
-    food:'The crew starved. Long missions need food production (greenhouses) because resupply from Earth may be months away.',
-    health:'The crew became too ill to continue. Radiation, injuries and bone/muscle loss are serious hazards of space travel.'
-  };
-  for(const k in reasons){
-    if(G.s[k]<=0){ G.over=true; G.win=false; G.reason=reasons[k]; return true; }
+/* ---------- surface ---------- */
+function bar(k){
+  const v=Math.round(G.s[k]), col = v>50?'var(--good)':v>25?'var(--warn)':'var(--bad)';
+  return `<div class="bar"><div class="lbl"><span>${STATS[k].icon} ${STATS[k].label}</span><b>${v}</b></div>
+    <div class="track"><div class="fill" style="width:${v}%;background:${col}"></div></div></div>`;
+}
+function renderSurface(){
+  const d=G.d, m=mods();
+  const crit=['oxygen','water','food','health','power'].filter(k=>G.s[k]<25);
+  const tabs=[['actions','🛠️ Actions'],['map','🗺️ Expeditions'],['base','🏗️ Base'],['research','🧪 Research'],['codex','📖 Codex']];
+  app.innerHTML = `
+  <div class="card">
+    <div class="hud">
+      <div><b style="font-family:var(--display)">${d.emoji} ${d.name}</b> <span class="tag">Day ${G.day}/${d.days}</span> <span class="tag">${CREW[G.crew].icon} ${G.name}</span></div>
+      <div>🔬 <span class="num">${G.sci}</span> &nbsp; 🧱 <span class="num">${G.mat}</span> &nbsp;
+        AP <span class="pips">${Array.from({length:m.ap},(_,i)=>`<span class="pip ${i<G.ap?'on':''}"></span>`).join('')}</span></div>
+    </div>
+    <div class="prog"><div style="width:${(G.day-1)/d.days*100}%"></div></div>
+    <div class="bars">${Object.keys(STATS).map(bar).join('')}</div>
+    ${G.storm>0?`<div class="fact" style="border-color:var(--warn)"><b style="color:var(--warn)">🌪️ Dust storm</b> — solar output reduced for ${G.storm} more day(s).</div>`:''}
+    ${crit.length?`<div class="fact" style="border-color:var(--bad)"><b style="color:var(--bad)">⚠ Warning:</b> ${crit.map(k=>STATS[k].label).join(', ')} critically low!</div>`:''}
+  </div>
+  ${G.event?renderEvent():`
+  <div class="tabs">${tabs.map(([k,l])=>`<button class="${G.tab===k?'sel':''}" onclick="G.tab='${k}';render()">${l}</button>`).join('')}</div>
+  ${G.tab==='actions'?tabActions():G.tab==='map'?tabMap():G.tab==='base'?tabBase():G.tab==='research'?tabResearch():tabCodex()}
+  `}
+  ${G.lastFact?`<div class="fact"><b>💡 Did you know?</b> ${G.lastFact}</div>`:''}
+  <div class="card"><b>📓 Mission log</b><div class="log">${G.log.slice(0,25).map(l=>`<p>${l}</p>`).join('')}</div></div>`;
+}
+
+function can(cost){ return Object.entries(cost).every(([k,v])=>G.s[k]>=v); }
+function costStr(c){ return Object.entries(c).map(([k,v])=>`−${v}${ICON[k]}`).join(' '); }
+
+function tabActions(){
+  return `<div class="card"><h2>What will you do?</h2><div class="actions">
+  ${ACTIONS.map(a=>{
+    const ok=can(a.cost)&&G.ap>0;
+    let gain=Object.entries(a.gain).map(([k,v])=>`+${v}${ICON[k]}`).join(' ');
+    if(a.special==='power') gain=`+${Math.round(G.d.solar*(G.crew==='engineer'?1.5:1)*(G.storm>0?.4:1))}⚡`;
+    if(a.sci>=5) gain+=` +${Math.round(a.sci*mods().sci)}🔬`;
+    if(a.mat) gain+=` +${a.mat}🧱`;
+    return `<button onclick="doAction('${a.id}')" ${ok?'':'disabled'}><b>${a.icon} ${a.name}</b>
+      <small>${a.desc}</small><br><small>${costStr(a.cost)} ${costStr(a.cost)&&gain?'→':''} ${gain}</small></button>`;
+  }).join('')}</div>
+  <div class="row" style="margin-top:12px"><button class="primary" style="flex:1" onclick="endDay()">🌙 END DAY ${G.ap>0?`(${G.ap} AP unused)`:''}</button></div></div>`;
+}
+
+function tabMap(){
+  const d=G.d, s=d.sites.find(x=>x.id===G.selSite);
+  return `<div class="card"><h2>🗺️ Expedition map</h2>
+  <p class="sub">Each trip costs <b>2 action points</b> plus power and oxygen. First visits pay full rewards; revisits pay half. ${d.sites.filter(x=>G.visited.has(x.id)).length}/${d.sites.length} explored.</p>
+  <div id="map"><span class="hab">🏠</span>
+    ${d.sites.map(x=>`<button class="site ${G.visited.has(x.id)?'done':''} ${G.selSite===x.id?'sel':''}" style="left:${x.x}%;top:${x.y}%" title="${x.name}" onclick="G.selSite='${x.id}';render()">${x.icon}</button>`).join('')}
+  </div>
+  <div class="mapinfo">${s?siteInfo(s):'<span class="sub">Tap a site to see details.</span>'}</div></div>`;
+}
+function siteInfo(s){
+  const ok=can(s.cost)&&G.ap>=2, m=mods(), rk=Math.round(Math.min(.95,s.risk*m.risk*(1))*100);
+  const rew=[s.sci?`+${Math.round(s.sci*m.sci)}🔬`:'',s.water?`+${s.water}💧`:'',s.mat?`+${s.mat}🧱`:'',s.morale?`+${s.morale}🙂`:''].filter(Boolean).join(' ');
+  return `<h3>${s.icon} ${s.name} ${G.visited.has(s.id)?'<span class="tag">visited</span>':'<span class="tag">new</span>'}</h3>
+  <p style="margin:4px 0">${s.desc}</p>
+  <p class="sub" style="margin:4px 0">Cost: ${costStr(s.cost)} · 2 AP · Rewards: ${rew} · Accident risk: <b>${rk}%</b>${s.rad?' (radiation)':''}</p>
+  <button class="primary" ${ok?'':'disabled'} onclick="doExpedition('${s.id}')">🚙 Go on expedition</button>`;
+}
+function tabBase(){
+  const m=mods();
+  return `<div class="card"><h2>🏗️ Base construction</h2>
+  <p class="sub">Spend materials (🧱 ${G.mat}) on modules that work for you every day. Mine regolith or explore to get more.</p>
+  <div class="actions">${BUILDINGS.map(b=>{
+    const cost=Math.round(b.cost*m.cost), has=G.build.has(b.id);
+    return `<button onclick="build('${b.id}')" ${has||G.mat<cost?'disabled':''}>
+      <b>${b.icon} ${b.name} ${has?'✅':''}</b><small>${b.desc}</small><br><small>${has?'Built':'Cost: '+cost+'🧱'}</small></button>`;
+  }).join('')}</div></div>`;
+}
+function tabResearch(){
+  return `<div class="card"><h2>🧪 Research</h2>
+  <p class="sub">Spend science points (🔬 ${sciSpendable()} available) to unlock permanent upgrades. Spending science does not lower your final discoveries.</p>
+  <div class="actions">${TECHS.map(t=>{
+    const has=G.tech.has(t.id);
+    return `<button onclick="research('${t.id}')" ${has||sciSpendable()<t.cost?'disabled':''}>
+      <b>${t.icon} ${t.name} ${has?'✅':''}</b><small>${t.desc}</small><br><small>${has?'Researched':'Cost: '+t.cost+'🔬'}</small></button>`;
+  }).join('')}</div></div>`;
+}
+function tabCodex(){
+  const items=[...G.codex.entries()];
+  return `<div class="card"><h2>📖 Mission Codex</h2>
+  <p class="sub">Real space facts you've learned (${items.length}).</p>
+  ${items.length?items.reverse().map(([f,d])=>`<div class="fact"><b>Day ${d}:</b> ${f}</div>`).join(''):'<p class="sub">Nothing yet — take actions, explore and handle events to learn!</p>'}</div>`;
+}
+
+/* science spending: separate wallet so discoveries (total) stay intact */
+const sciSpendable = () => G.sci - G.spent;
+
+function build(id){
+  const b=BUILDINGS.find(x=>x.id===id), cost=Math.round(b.cost*mods().cost);
+  if(G.build.has(id)||G.mat<cost) return;
+  G.mat-=cost; G.build.add(id); log(`🏗️ Built ${b.icon} ${b.name}.`); beep(520,.15,'square');
+  if(G.build.size>=4) ach('builder');
+  learn(id==='shelter'?'Burying habitats under regolith or ice can cut radiation exposure dramatically — a design planned for Moon and Mars bases.':id==='green'?'Closed-loop life support with plants is a key goal: crops make food, oxygen and clean water through transpiration.':null);
+  render();
+}
+function research(id){
+  const t=TECHS.find(x=>x.id===id);
+  if(G.tech.has(id)||sciSpendable()<t.cost) return;
+  G.spent+=t.cost; G.tech.add(id); log(`🧪 Researched ${t.icon} ${t.name}.`); beep(700,.15,'triangle');
+  if(id==='ai') G.ap++;
+  if(G.tech.size>=3) ach('tech');
+  render();
+}
+
+/* ============ actions ============ */
+function hazard(prob, dmg, rad, label){
+  if(Math.random()<Math.min(.95,prob)){
+    const d=Math.round(dmg*(rad?mods().rad:1));
+    G.s.health=clamp(G.s.health-d); log(`😬 ${label} −${d} health.`); beep(180,.25,'sawtooth'); return true;
   }
   return false;
 }
+function doAction(id){
+  const a=ACTIONS.find(x=>x.id===id), m=mods();
+  if(!a||G.ap<=0||!can(a.cost)) return;
+  G.ap--; for(const k in a.cost) G.s[k]=clamp(G.s[k]-a.cost[k]);
+  const gain={...a.gain};
+  if(a.botany && gain.food) gain.food=Math.round(gain.food*m.farm);
+  if(a.botany && G.crew==='botanist') gain.morale=(gain.morale||0)+3;
+  if(a.geo && G.crew==='geologist') gain.water=Math.round(gain.water*1.3);
+  applyDelta(gain);
+  if(a.special==='power') G.s.power=clamp(G.s.power+G.d.solar*(G.crew==='engineer'?1.5:1)*(G.storm>0?.4:1));
+  if(a.mat) G.mat+=a.mat;
+  const sc=Math.round(a.sci*m.sci); if(sc) addSci(sc);
+  if(id==='farm'){ G.harvests++; if(G.harvests>=5) ach('greens'); }
+  let msg=`${a.icon} ${a.name}.`; if(a.sci>=5) msg+=` +${sc} science.`; if(a.mat) msg+=` +${a.mat} materials.`;
+  log(msg); beep(480,.07);
+  if(a.risk) hazard(G.d.risk*m.risk, 6+Math.random()*10, G.key==='europa', 'Minor accident outside!');
+  learn(a.fact);
+  if(checkFail()) return render();
+  render();
+}
+function doExpedition(id){
+  const s=G.d.sites.find(x=>x.id===id), m=mods();
+  if(!s||G.ap<2||!can(s.cost)) return;
+  G.ap-=2; for(const k in s.cost) G.s[k]=clamp(G.s[k]-s.cost[k]);
+  const first=!G.visited.has(id), f=first?1:.5;
+  const hurt=hazard(s.risk*m.risk, s.dmg, s.rad, `Accident at ${s.name}!`);
+  const sc=Math.round((s.sci||0)*m.sci*f); if(sc) addSci(sc);
+  if(s.water) applyDelta({water:Math.round(s.water*f)});
+  if(s.mat) G.mat+=Math.round(s.mat*f);
+  if(s.morale) applyDelta({morale:Math.round(s.morale*f)});
+  G.visited.add(id);
+  log(`🚙 Expedition to ${s.name}${hurt?' (rough trip)':''}: ${[sc?`+${sc}🔬`:'',s.water?`+${Math.round(s.water*f)}💧`:'',s.mat?`+${Math.round(s.mat*f)}🧱`:''].filter(Boolean).join(' ')}.`);
+  G.rover.target = 0.1+Math.random()*0.8; G.rover.t=performance.now();
+  setTimeout(()=>{ G.rover.target=0.62; },2800);
+  ach('first'); if(G.d.sites.every(x=>G.visited.has(x.id))) ach('explorer');
+  learn(s.fact); beep(560,.1,'triangle');
+  if(checkFail()) return render();
+  render();
+}
 
+/* ============ day cycle ============ */
+function endDay(){
+  const d=G.d, df=DIFFS[G.diff], t=G.tech;
+  const dr=d.drain; let note=`🌙 End of day ${G.day}.`;
+  const red={water:t.has('recycler')?2:0, power:t.has('battery')?2:0, food:t.has('nutri')?2:0};
+  for(const k in dr) G.s[k]=clamp(G.s[k]-Math.max(1,Math.round(dr[k]*df.drain)-(red[k]||0)));
+  // buildings
+  const b=G.build, sunny=G.storm>0?.4:1;
+  if(b.has('solar')) G.s.power=clamp(G.s.power+Math.round(d.solar*.35*sunny));
+  if(b.has('drill')){ G.s.water=clamp(G.s.water+9); G.s.power=clamp(G.s.power-2); }
+  if(b.has('oxy') && G.s.power>=3 && G.s.water>=2){ G.s.oxygen=clamp(G.s.oxygen+8); G.s.power-=3; G.s.water-=2; }
+  if(b.has('green') && G.s.water>=2){ G.s.food=clamp(G.s.food+7); G.s.water-=2; G.s.morale=clamp(G.s.morale+1); }
+  if(b.has('rec')) G.s.morale=clamp(G.s.morale+3);
+  if(b.has('comm')) addSci(3);
+  if(G.load.has('med')) applyDelta({health:1});
+  if(G.storm>0) G.storm--;
+  if(G.s.power<=0){ applyDelta({oxygen:-14,health:-6}); note+=' ⚠ Power outage: life support failing!'; }
+  if(G.s.morale<20){ applyDelta({health:-4}); note+=' 😟 Low morale hurts your health.'; }
+  if(G.s.oxygen<15||G.s.water<15||G.s.food<15){ applyDelta({health:-6}); note+=' Shortages hurt your health.'; }
+  applyDelta({health:2});
+  log(note);
+  if(checkFail()) return render();
+  if(G.day>=d.days){ G.over=true; G.win=true; ach('survivor'); scr='end'; return render(); }
+  G.day++; G.ap=mods().ap;
+  log(`☀️ Day ${G.day} begins.`);
+  const roll=Math.random();
+  if(roll<df.event){
+    const pool=EVENTS.all.concat(EVENTS[G.key]);
+    const fresh=pool.filter(e=>!G.seen.has(e.title));
+    const e=pick(fresh.length?fresh:pool); G.seen.add(e.title);
+    G.event={type:'event',...e}; beep(300,.2,'square');
+  } else if(roll<df.event+.22){
+    const q=pick(QUIZ), opts=shuffle([{t:q.a,correct:true},...q.w.map(t=>({t,correct:false}))]);
+    G.event={type:'quiz',title:'📡 Mission Control Quiz',text:q.q,choices:opts,fact:q.why};
+  } else if(Math.random()<.5) learn(pick(GENERAL_FACTS));
+  render();
+}
+function chooseEvent(i){
+  const e=G.event, c=e.choices[i];
+  if(e.type==='quiz'){
+    G.quizTotal++;
+    if(c.correct){ G.quizRight++; applyDelta({morale:8}); addSci(5); log('📡 Quiz: correct! +5 science, +8 morale.'); toast('✅ Correct! +5🔬'); beep(900,.2,'triangle'); if(G.quizRight>=4) ach('scholar'); }
+    else { log('📡 Quiz: not quite — mission control explains the answer.'); toast('❌ Not quite.'); beep(200,.25,'sawtooth'); }
+    learn(e.fact);
+  } else {
+    applyDelta(c.e||{}, c.rad);
+    if(c.sci) addSci(Math.round(c.sci*mods().sci));
+    if(c.storm) G.storm=c.storm; if(e.storm && !c.storm) G.storm=e.storm;
+    log(`⚠ ${e.title}: ${c.res}`); learn(e.fact);
+  }
+  G.event=null;
+  if(checkFail()) return render();
+  render();
+}
+function renderEvent(){
+  const e=G.event, q=e.type==='quiz';
+  return `<div class="card" style="border-color:${q?'var(--accent)':'var(--warn)'}">
+    <h2 style="color:${q?'var(--accent)':'var(--warn)'}">${e.title}</h2><p>${e.text}</p>
+    <div class="choices">${e.choices.map((c,i)=>`<button onclick="chooseEvent(${i})">${c.t}</button>`).join('')}</div></div>`;
+}
+
+function checkFail(){
+  const reasons={
+    oxygen:'You ran out of breathable oxygen. In space, air is life — production and recycling must outpace use.',
+    water:'Dehydration ended the mission. Water is heavy to launch, so astronauts recycle it and mine local ice.',
+    food:'The crew starved. Long missions need food production because resupply may be months away.',
+    health:'The crew became too ill to continue. Radiation, injuries and bone and muscle loss are serious hazards.'
+  };
+  for(const k in reasons) if(G.s[k]<=0){ G.over=true; G.win=false; G.reason=reasons[k]; scr='end'; return true; }
+  return false;
+}
+
+/* ---------- end screen ---------- */
 function renderEnd(){
-  const d=G.d;
-  const stat = Object.values(G.s).reduce((a,b)=>a+b,0)/6;
-  const score = Math.round(G.sci*10 + stat*5 + (G.win?500:G.day*20));
-  const rank = !G.win ? 'Lost in Space' : G.sci>=100?'Mission Commander 🏆':G.sci>=60?'Senior Astronaut 🥇':G.sci>=30?'Astronaut 🥈':'Rookie 🥉';
+  const d=G.d, stat=Object.values(G.s).reduce((a,b)=>a+b,0)/6;
+  const score=Math.round(G.sci*10+stat*5+G.visited.size*40+G.build.size*30+(G.win?500:G.day*20)+G.quizRight*25);
+  const rank=!G.win?'Lost in Space':G.sci>=140?'Mission Commander 🏆':G.sci>=90?'Senior Astronaut 🥇':G.sci>=45?'Astronaut 🥈':'Rookie 🥉';
+  const hs=store.get('hs',{}); const best = G.win && score>(hs[G.key]||0); if(best){ hs[G.key]=score; store.set('hs',hs); }
   app.innerHTML = `
   <div class="card center">
     <p class="big">${G.win?'🎉':'💥'}</p>
-    <h2>${G.win?'Mission Complete!':'Mission Failed'}</h2>
-    <p>${G.win?`You survived all ${d.days} days on ${d.name}.`:G.reason}</p>
-    <p><span class="tag">Rank: ${rank}</span> <span class="tag">Score: ${score}</span> <span class="tag">Science: ${G.sci}</span> <span class="tag">Days: ${G.win?d.days:G.day}</span></p>
+    <h2 style="font-size:1.5rem">${G.win?'MISSION COMPLETE':'MISSION FAILED'}</h2>
+    <p>${G.win?`${G.name} survived all ${d.days} days on ${d.name}.`:G.reason}</p>
+    <p><span class="tag">Rank: ${rank}</span><span class="tag">Score: ${score}${best?' 🏆 new best!':''}</span><span class="tag">Science: ${G.sci}</span>
+       <span class="tag">Sites: ${G.visited.size}/${d.sites.length}</span><span class="tag">Quiz: ${G.quizRight}/${G.quizTotal}</span></p>
     <p class="sub">${d.science}</p>
   </div>
-  <div class="card">
-    <h2>🌍 What space exploration gives us back</h2>
-    <p class="sub">Your science points unlocked these real-world benefits. Locked items need more research — keep exploring!</p>
-    ${SPINOFFS.map(s=>`<div class="tech ${G.unlocked.has(s.name)?'':'locked'}">
-      <div class="e">${G.unlocked.has(s.name)?s.icon:'🔒'}</div>
+  <div class="card"><h2>🏆 Achievements</h2><div class="grid">
+    ${Object.entries(ACHIEVEMENTS).map(([k,a])=>`<div class="tech ${G.ach.has(k)?'':'locked'}"><div class="e">${a.icon}</div><div><b>${a.name}</b><br><small style="color:var(--muted)">${a.txt}</small></div></div>`).join('')}
+  </div></div>
+  <div class="card"><h2>🌍 What space exploration gives us back</h2>
+    <p class="sub">Your science unlocked these real-world benefits. Locked ones need more research.</p>
+    ${SPINOFFS.map(s=>`<div class="tech ${G.unlocked.has(s.name)?'':'locked'}"><div class="e">${G.unlocked.has(s.name)?s.icon:'🔒'}</div>
       <div><b>${s.name}</b> <span class="tag">${s.at} 🔬</span><br><small style="color:var(--muted)">${s.txt}</small></div></div>`).join('')}
   </div>
-  <div class="card">
-    <h2>Survival lessons</h2>
-    <ul style="color:var(--muted);line-height:1.6;padding-left:20px;margin:0">
+  <div class="card"><h2>🎓 Survival lessons</h2>
+    <ul style="color:var(--muted);line-height:1.7;padding-left:20px;margin:0">
       <li><b>Closed loops:</b> recycle air and water; every kilogram launched is expensive.</li>
-      <li><b>Live off the land (ISRU):</b> mine ice, make oxygen, grow food.</li>
-      <li><b>Mind and body:</b> exercise, sleep and morale are survival gear too.</li>
+      <li><b>Live off the land (ISRU):</b> mine ice, make oxygen, grow food, build with local rock.</li>
+      <li><b>Mind and body:</b> exercise, sleep and morale are survival gear.</li>
       <li><b>Prepare for the unexpected:</b> radiation, dust and failures need backups.</li>
       <li><b>Teamwork:</b> thousands of people on Earth support each astronaut.</li>
     </ul>
+    <p class="sub" style="margin-top:10px">You learned <b>${G.codex.size}</b> real space facts this mission.</p>
   </div>
-  <div class="row"><button class="primary" onclick="G=null;render()">🚀 Play again</button></div>`;
+  <div class="row"><button class="primary" style="flex:1;padding:14px" onclick="G=null;scr='menu';render()">🚀 NEW MISSION</button></div>`;
 }
+
+/* ============ surface scene animation ============ */
+(function(){
+  const c=$('#scene'), x=c.getContext('2d'), W=960, H=250;
+  const dust=Array.from({length:60},()=>({x:Math.random()*W,y:Math.random()*H,s:rnd(1,4),v:rnd(2,6)}));
+  const gy=px=>190+Math.sin(px*.006)*12+Math.sin(px*.017+1)*5;
+  const craters=Array.from({length:7},()=>({x:rnd(40,W-40),w:rnd(30,70)}));
+  function frame(t){
+    requestAnimationFrame(frame);
+    if(scr!=='surface'||!G) return;
+    const k=G.key, storm=G.storm>0;
+    x.clearRect(0,0,W,H);
+    const sky = k==='mars'?['#7a3b24','#e0a275']: k==='europa'?['#000105','#0a1020']:['#000104','#070a16'];
+    const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,sky[0]); g.addColorStop(1,sky[1]); x.fillStyle=g; x.fillRect(0,0,W,H);
+    if(k!=='mars'){ x.fillStyle='#fff'; for(let i=0;i<70;i++){ x.globalAlpha=.4+.6*Math.abs(Math.sin(t/900+i)); x.fillRect((i*131)%W,(i*53)%150,1.5,1.5);} x.globalAlpha=1; }
+    // celestial bodies
+    if(k==='moon'){ x.fillStyle='#3a7bd5'; x.beginPath(); x.arc(780,60,24,0,7); x.fill(); x.fillStyle='rgba(255,255,255,.6)'; x.fillRect(764,54,22,4); x.fillStyle='#2f9e5a'; x.fillRect(772,66,10,6); }
+    if(k==='europa'){
+      x.save(); x.beginPath(); x.arc(700,70,95,0,7); x.clip();
+      const cols=['#d9a066','#b9763f','#e8c9a0','#a1612f','#d9a066'];
+      cols.forEach((cc,i)=>{ x.fillStyle=cc; x.fillRect(600,-25+i*38,200,38); });
+      x.fillStyle='rgba(200,60,40,.6)'; x.beginPath(); x.ellipse(720,100,22,12,0,0,7); x.fill(); x.restore();
+    }
+    // sun
+    const sx=((t/60000)%1)*(W+160)-80, sy=60+Math.abs(Math.sin(sx*.004))*-30+40;
+    x.fillStyle=k==='europa'?'#fff7e0':'#fff3c8'; x.beginPath(); x.arc(sx,k==='mars'?70:sy,k==='europa'?5:k==='mars'?13:10,0,7); x.fill();
+    // far hills
+    x.fillStyle=k==='mars'?'#8b4426':k==='europa'?'#a6bfd0':'#5f5f68';
+    x.beginPath(); x.moveTo(0,H); for(let px=0;px<=W;px+=20) x.lineTo(px,150+Math.sin(px*.011+2)*20+Math.sin(px*.03)*6); x.lineTo(W,H); x.fill();
+    // ground
+    x.fillStyle=k==='mars'?'#a8512c':k==='europa'?'#d3e6f0':'#8d8d95';
+    x.beginPath(); x.moveTo(0,H); for(let px=0;px<=W;px+=10) x.lineTo(px,gy(px)); x.lineTo(W,H); x.fill();
+    x.fillStyle='rgba(0,0,0,.18)'; craters.forEach(c2=>{ x.beginPath(); x.ellipse(c2.x,gy(c2.x)+10,c2.w,6,0,0,7); x.fill(); });
+    // habitat
+    const bx=290, by=gy(bx);
+    const lit = G.s.power>15;
+    x.fillStyle='#cfd6f5'; x.beginPath(); x.arc(bx,by,52,Math.PI,0); x.fill();
+    x.fillStyle='#9aa6d6'; x.fillRect(bx-52,by-4,104,8);
+    x.fillStyle=lit?'#ffe28a':'#2a3156'; x.beginPath(); x.arc(bx-18,by-24,8,0,7); x.fill(); x.beginPath(); x.arc(bx+18,by-24,8,0,7); x.fill();
+    x.fillStyle='#5a6aa8'; x.fillRect(bx-9,by-26,18,26);
+    x.strokeStyle='#cfd6f5'; x.lineWidth=2; x.beginPath(); x.moveTo(bx,by-52); x.lineTo(bx,by-72); x.stroke();
+    x.fillStyle=lit&&Math.floor(t/500)%2?'#ff5d6c':'#702030'; x.beginPath(); x.arc(bx,by-72,3,0,7); x.fill();
+    // buildings
+    let ox=bx+90;
+    const draw={
+      solar:(px,py)=>{ x.fillStyle='#2b4aa8'; x.save(); x.translate(px,py-18); x.rotate(-.35); x.fillRect(-22,-6,44,12); x.restore(); x.fillStyle='#ccc'; x.fillRect(px-1,py-18,2,18); },
+      drill:(px,py)=>{ x.fillStyle='#b0b7d8'; x.fillRect(px-6,py-40,12,40); x.fillStyle='#35e0ff'; x.fillRect(px-14,py-8,28,8); },
+      oxy:(px,py)=>{ x.fillStyle='#8ecbff'; x.fillRect(px-14,py-28,28,28); x.fillStyle='#fff'; x.fillRect(px-8,py-22,16,5); },
+      green:(px,py)=>{ x.fillStyle='rgba(61,220,151,.75)'; x.beginPath(); x.arc(px,py,26,Math.PI,0); x.fill(); x.fillStyle='#1d7a4f'; x.fillRect(px-14,py-10,6,10); x.fillRect(px+4,py-14,6,14); },
+      shelter:(px,py)=>{ x.fillStyle='#6a7090'; x.fillRect(px-22,py-24,44,24); x.fillStyle='#4a5070'; x.fillRect(px-22,py-30,44,6); },
+      rec:(px,py)=>{ x.fillStyle='#c78fff'; x.beginPath(); x.arc(px,py,18,Math.PI,0); x.fill(); },
+      comm:(px,py)=>{ x.strokeStyle='#ddd'; x.lineWidth=2; x.beginPath(); x.moveTo(px,py); x.lineTo(px,py-22); x.stroke(); x.fillStyle='#ddd'; x.beginPath(); x.ellipse(px,py-26,16,6,-.4,0,7); x.fill(); }
+    };
+    BUILDINGS.forEach(b=>{ if(G.build.has(b.id)){ draw[b.id](ox,gy(ox)); ox+=Math.max(52,b.id==='green'?62:52); } });
+    // rover
+    const r=G.rover; r.x+=(r.target-r.x)*.02;
+    const rx=r.x*W, ry=gy(rx), moving=Math.abs(r.target-r.x)>.004;
+    x.fillStyle='#e8edff'; x.fillRect(rx-18,ry-18+(moving?Math.sin(t/60)*1:0),36,12);
+    x.fillStyle='#35e0ff'; x.fillRect(rx+6,ry-26,10,8);
+    x.fillStyle='#222'; [-12,12].forEach(o=>{ x.beginPath(); x.arc(rx+o,ry-4,6,0,7); x.fill(); });
+    // astronaut
+    const ax=bx+62+(moving?0:Math.sin(t/1500)*10), ay=gy(ax);
+    x.fillStyle='#fff'; x.fillRect(ax-5,ay-26,10,18); x.beginPath(); x.arc(ax,ay-30,7,0,7); x.fill();
+    x.fillStyle='#35e0ff'; x.beginPath(); x.arc(ax+1,ay-30,4,0,7); x.fill();
+    x.fillStyle='#fff'; x.fillRect(ax-5,ay-8,4,8); x.fillRect(ax+1,ay-8,4,8);
+    // particles
+    if(storm || k==='mars'){
+      x.fillStyle=storm?'rgba(230,150,90,.5)':'rgba(230,170,120,.12)';
+      dust.forEach(p=>{ p.x-=p.v*(storm?3:.6); if(p.x<0){p.x=W;p.y=Math.random()*H} x.fillRect(p.x,p.y,p.s*(storm?4:2),p.s*.6); });
+      if(storm){ x.fillStyle='rgba(190,110,60,.35)'; x.fillRect(0,0,W,H); }
+    }
+    // power-out darkness
+    if(G.s.power<=0){ x.fillStyle='rgba(0,0,10,.45)'; x.fillRect(0,0,W,H); }
+  }
+  requestAnimationFrame(frame);
+})();
 
 render();
 </script>
